@@ -189,6 +189,7 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         full_response = ""
         agents_used = set()  # Track which agents were invoked
         tools_used = set()  # Track which tools were called
+        maps_widget_token = None  # Extract from functionResponse
 
         for line in response.text.split("\n"):
             if line.startswith("data: "):
@@ -210,6 +211,25 @@ async def send_to_agent(user_id: str, message: str) -> dict:
                             if func_name:
                                 tools_used.add(func_name)
 
+                        # Extract widget token from functionResponse (MapsAgent output)
+                        # This is where the callback-injected token lives
+                        if "functionResponse" in part:
+                            func_resp = part["functionResponse"]
+                            resp_data = func_resp.get("response", {})
+                            result = resp_data.get("result", "")
+                            if "[MAPS_WIDGET_DATA:" in result and not maps_widget_token:
+                                # Extract the widget token directly from functionResponse
+                                widget_match = re.search(r'\[MAPS_WIDGET_DATA:(\{.*?"grounding_chunks":\s*\[\]\})', result, re.DOTALL)
+                                if widget_match:
+                                    try:
+                                        widget_json_str = widget_match.group(1)
+                                        widget_json_str = widget_json_str.replace('\\"', '"').replace('\\n', '\n')
+                                        widget_data = json.loads(widget_json_str)
+                                        maps_widget_token = widget_data.get("widget_token")
+                                        print(f"DEBUG: Extracted widget token from functionResponse: {maps_widget_token[:50]}...")
+                                    except json.JSONDecodeError as e:
+                                        print(f"DEBUG: Failed to parse widget JSON from functionResponse: {e}")
+
                         # Get text from final response
                         if "text" in part:
                             full_response = part["text"]  # Take the last text response
@@ -224,42 +244,29 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         places = []
         directions = None
         response_type = "text"  # Default fallback
-        maps_widget_token = None  # Google Maps contextual widget token
+        # maps_widget_token already extracted from functionResponse above
 
         # First, check if response is an ADK AgentTool wrapper like {"MapsAgent_response": {"result": "..."}}
-        try:
-            wrapper_json = json.loads(full_response.strip())
-            if isinstance(wrapper_json, dict):
-                # Look for *_response keys (e.g., MapsAgent_response, SearchAgent_response)
-                for key in wrapper_json:
-                    if key.endswith('_response'):
-                        inner = wrapper_json[key]
-                        if isinstance(inner, dict) and 'result' in inner:
-                            # The result is typically a JSON string or text
-                            full_response = inner['result']
-                            # Clean up any "json\n" prefix that might be there from markdown formatting
-                            if full_response.startswith('json\n'):
-                                full_response = full_response[5:]
-                            break
-        except (json.JSONDecodeError, TypeError):
-            pass
+        # Use regex to extract the result field to avoid JSON escape issues
+        wrapper_match = re.search(r'"(\w+Agent)_response":\s*\{\s*"result":\s*"(.*)"', full_response, re.DOTALL)
+        if wrapper_match:
+            agent_name = wrapper_match.group(1)
+            result_str = wrapper_match.group(2)
+            # Unescape the result string
+            result_str = result_str.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+            full_response = result_str
+            # Clean up any "json\n" prefix from markdown formatting
+            if full_response.startswith('json\n'):
+                full_response = full_response[5:]
+            # Remove widget marker from result
+            if "[MAPS_WIDGET_DATA:" in full_response:
+                full_response = re.sub(r'\s*\[MAPS_WIDGET_DATA:\{.*?"grounding_chunks":\s*\[\]\}\s*', '', full_response, flags=re.DOTALL).strip()
+            print(f"DEBUG: Unwrapped {agent_name} response (first 200): {full_response[:200]}")
 
-        # Debug: log the response after unwrapping
-        print(f"DEBUG: Response after unwrap (first 500 chars): {full_response[:500]}")
-        print(f"DEBUG: Looking for MAPS_WIDGET_DATA marker...")
-
-        # Extract widget data if present (injected by after_model_callback)
-        # This must be done AFTER unwrapping the ADK response
-        widget_match = re.search(r'\[MAPS_WIDGET_DATA:(\{.*?\})\]', full_response, re.DOTALL)
-        print(f"DEBUG: widget_match = {widget_match}")
-        if widget_match:
-            try:
-                widget_data = json.loads(widget_match.group(1))
-                maps_widget_token = widget_data.get("widget_token")
-                # Remove the widget data marker from the response text
-                full_response = re.sub(r'\s*\[MAPS_WIDGET_DATA:\{.*?\}\]\s*', '', full_response, flags=re.DOTALL).strip()
-            except json.JSONDecodeError:
-                pass
+        # Widget token already extracted from functionResponse in SSE parsing above
+        # Just clean up any marker that might be in the response text
+        if "[MAPS_WIDGET_DATA:" in full_response:
+            full_response = re.sub(r'\s*\[MAPS_WIDGET_DATA:\{.*?\}\]\s*', '', full_response, flags=re.DOTALL).strip()
 
         # Extract JSON from markdown code block if present (handles nested code blocks too)
         json_to_parse = full_response
