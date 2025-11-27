@@ -1,0 +1,469 @@
+{
+  "campground": {
+    "name": "Bakersfield KOA Journey",
+    "facility_id": "koa_bakersfield",
+    "parent_asset_id": "",
+    "organization_id": "",
+    "parent_organization_id": "",
+    "location": {
+      "street_address": "5025 Wible Rd",
+      "city": "Bakersfield",
+      "state": "CA",
+      "zip_code": "93313",
+      "country": "US",
+      "latitude": 35.30871,
+      "longitude": -119.039528
+    },
+    "descriptions": {
+      "overview": "Bakersfield KOA Journey is a full-service RV campground designed for convenience and comfort, making it an ideal oasis for travelers. Located in Bakersfield, the \"Gateway to Central Valley\" and the \"Country Music Capital of the West Coast,\" this KOA offers a range of amenities and activities for an unforgettable outdoor experience for families and friends. It's a great place to rest and enjoy time with loved ones.",
+      "facilities_and_infrastructure": {
+        "rv_sites": "Offers a variety of RV sites, including pull-through and back-in options with full hookups (50/30 amp). Extended pull-through sites up to 90ft are available. Some deluxe back-in sites feature propane fire pits and covered patios.",
+        "tent_sites": "Premium tent sites are available.",
+        "cabins_lodging": "Not specified in available sources.",
+        "camp_store": "On-site for camping essentials.",
+        "laundry_facilities": "Available for guest convenience.",
+        "dump_stations": "Yes, dump station available.",
+        "shower_restroom_buildings": "Clean and well-maintained facilities.",
+        "swimming_pool": "Resort-style pool open year-round due to the mild climate.",
+        "hot_tub": "Available for relaxation.",
+        "clubhouse": "Yes, there is a clubhouse.",
+        "other_notable_infrastructure": "Upgraded Wi-Fi is available. Well-lit after-hours check-in service."
+      },
+      "natural_features": {
+        "location": "The campground is located in the Central Valley region of California.",
+        "landscape": "The landscape includes trees and greenery."
+      },
+      "recreation_opportunities": {
+        "pool_and_hot_tub": "Yes, there is a pool and hot tub.",
+        "playground": "Available for children.",
+        "dog_park": "Yes, there is a KampK9. Note that some reviews mention the dog park is small and can be muddy.",
+        "gym_fitness_center": "On-site gym available.",
+        "mini_golf": "Not specified in available sources.",
+        "game_room": "Not specified in available sources.",
+        "bike_trails": "Opportunities for biking in the surrounding area.",
+        "sports_courts": "Corn hole is available."
+      }
+    },
+    "contact": {
+      "address": "5025 Wible Rd, Bakersfield, CA 93313",
+      "phone_number": "800-562-4167",
+      "email_address": null,
+      "toll_free_reservation_number": "800-562-4167"
+    },
+    "ratings": {
+      "overall": "Based on customer reviews, Bakersfield KOA Journey generally receives positive feedback.",
+      "average_good_sam": [
+        "4.6/5",
+        "4.2/5",
+        "4.2/5"
+      ],
+      "koa_rating": "4.5 stars"
+    },
+    "amenities": {
+      "restrooms_showers": {
+        "restrooms": "Clean and well-maintained restrooms are available",
+        "hot_showers": "Hot showers are available",
+        "laundry_facilities": "For guest convenience"
+      },
+      "utilities": {
+        "dump_station": "Available for RV waste disposal",
+        "propane_firepit": "Deluxe Back-In RV sites include a propane firepit"
+      },
+      "recreation_amenities": {
+        "swimming_pool": "Open year-round",
+        "hot_tub_sauna": "Available for relaxation",
+        "kampk9_dog_park": "A fenced, off-leash area for dogs",
+        "playground": "For children",
+        "gym_fitness_center": "Stay active during your stay",
+        "corn_hole": "Available for playing",
+        "mini_golf": "For family fun"
+      },
+      "services_stores": {
+        "camp_store": "Stock up on camping essentials",
+        "snack_bar": "Onsite snack bar available",
+        "restaurant": "Crest Bar & Grill offers convenient onsite dining",
+        "bar_lounge": "A bar is available for socializing"
+      },
+      "technology": {
+        "wifi": "Upgraded Wi-Fi is available"
+      },
+      "other": {
+        "pavilion": "Available for gatherings",
+        "bbq_grills": "Likely available at RV sites",
+        "fire_pits_fire_rings": "Propane fire pits available at some sites",
+        "clubhouse": "A large clubhouse is available",
+        "meeting_room": "Available for group events"
+      }
+    },
+    "activities": {
+      "on_site": [
+        {
+          "name": "Swimming Pool",
+          "description": "Relax by the pool, take a swim, or unwind in the hot tub. The pool is open year-round due to the mild climate."
+        },
+        {
+          "name": "KampK9\u00ae",
+          "description": "Fenced dog park for off-leash play."
+        },
+        {
+          "name": "Playground",
+          "description": "Available for kids."
+        },
+        {
+          "name": "Corn Hole",
+          "description": "Enjoy a game of corn hole."
+        },
+        {
+          "name": "Gym",
+          "description": "Stay active at the on-site fitness center."
+        },
+        {
+          "name": "Camp Store",
+          "description": "Stock up on camping essentials."
+        },
+        {
+          "name": "Laundry Room",
+          "description": "Available for guests."
+        },
+        {
+          "name": "Clubhouse",
+          "description": "A large clubhouse is available, suitable for meetups and rallies."
+        },
+        {
+          "name": "Mini Golf",
+          "description": "Enjoy a round of mini golf."
+        }
+      ]
+    },
+    "rules": {
+      "General Information": [
+        "Bakersfield KOA Journey is a KOA Journey campground that offers a convenient oasis for travelers with long pull-through RV sites.",
+        "The campground is located at 5025 Wible Rd, Bakersfield, CA 93313.",
+        "The Registration Office/Camp Store is open from 9:30 AM to 6:30 PM."
+      ],
+      "Check-In/Check-Out": [
+        "Check-in time: 2:00 PM",
+        "Check-out time: 11:00 AM",
+        "It is unclear whether early check-in is available. Contact the front desk to inquire.",
+        "It is unclear whether late check-out is available. Contact the front desk to inquire."
+      ],
+      "Length of Stay": [
+        "Maximum stay is 27 days unless pre-approved for a long-term site.",
+        "Extended stay options are available. Contact the campground at 661-833-9998 or bakersfield@koa.com for reservations.",
+        "Monthly rates are available for back-in and pull-through sites:",
+        "Back-in (50/30 amp service, full hookups): $700/month + metered electric",
+        "Pull-through (50/30 amp service, full hookups): $735/month + metered electric"
+      ],
+      "Quiet Hours": [
+        "Quiet hours are from 9:00 PM to 7:00 AM."
+      ],
+      "Pet Policies": [
+        "Pets are allowed.",
+        "There is a Kamp K9\u00ae dog park on-site.",
+        "Pets must be on a leash outside of the dog park.",
+        "Owners are responsible for cleaning up after their pets.",
+        "Pets are not allowed in any buildings or the pool area.",
+        "KOA Paw Pen\u2122 sites are available, which include a private, off-leash fenced pet area and on-site pet station.",
+        "Some reviews mention additional pet fees. Contact the front desk to inquire."
+      ],
+      "Guest/Visitor Policies": [
+        "Day visitors are allowed.",
+        "All visitors must check in at the front desk.",
+        "Visitor fees are $10 per additional adult and $15 per additional vehicle.",
+        "Visitors are permitted until quiet hours (9:00 PM).",
+        "Visitors must adhere to campground rules.",
+        "All visitors need to provide their license plate number and names.",
+        "Visitors must park in overflow parking.",
+        "A limit of 6 people per site will be enforced. This includes both the number of people on your reservation and any day visitors.",
+        "If you have the maximum number of people on your reservation, day visitors are not allowed."
+      ],
+      "Vehicle Policies": [
+        "One vehicle per site is guaranteed.",
+        "Two vehicles are allowed if they can fit at your site.",
+        "The campground can accommodate rigs up to 55 feet plus tow.",
+        "Some sites can accommodate rigs up to 110 feet.",
+        "Golf carts are not permitted to be driven on the campground.",
+        "The speed limit is not specified, but it is typical for KOAs to have a speed limit of 5-10 mph."
+      ],
+      "Fire Policies": [
+        "Campfires are allowed, but it is unclear whether fire rings are provided. Contact the front desk to inquire.",
+        "It is unclear whether outside firewood is allowed. Contact the front desk to inquire.",
+        "It is unclear whether there are seasonal fire bans. Contact the front desk to inquire."
+      ],
+      "Generator Use": [
+        "Generator hours are not specified. Contact the front desk to inquire.",
+        "It is unclear whether there are quiet generator requirements. Contact the front desk to inquire."
+      ],
+      "Other Rules": [
+        "Alcohol Policy: Not specified.",
+        "Smoking Policy: Not specified.",
+        "Firearms/Weapons: Not specified.",
+        "Discharge of Fireworks: Not specified.",
+        "Waste Disposal: All litter must be deposited in a trash bin.",
+        "Recyclables: Not specified."
+      ],
+      "Important Notices": [
+        "The campground is open year-round.",
+        "The Crest Bar & Grill is permanently closed.",
+        "Various types of wildlife may be found on and around the campground. Be alert and give them distance and respect."
+      ],
+      "Cancellation Policy": [
+        "Effective for reservations made starting on 10/1/24, you must call the campground before the deadlines below to receive a refund of your deposit, less a $20 administrative cancellation fee. Text and email notifications of cancellations will not be accepted.",
+        "RV & Tent Sites: You must give 7 days cancellation notice. Call the KOA you made your reservation with by 4 p.m., seven days before your scheduled arrival.",
+        "Lodging & Accommodations: You must give 14 days cancellation notice. Call the KOA you made your reservation with by 4 p.m., fourteen days before your scheduled arrival.",
+        "For guests booking accommodations in California, a full refund will be given for reservations canceled within 24 hours of booking, provided the arrival date is at least 72 hours after the time of booking.",
+        "Reservations made after these deadlines require nonrefundable deposits.",
+        "Cancellations made after the deadlines will result in forfeiture of the full deposit.",
+        "No refunds are given due to the discomforts of nature, including no-shows and early checkouts.",
+        "No refunds are given on or after the arrival date.",
+        "Refunds will be processed using the original credit/debit card, with no exceptions.",
+        "The cancellation policy may be amended during a Regional/National travel disruption.",
+        "Holidays and special events may have unique deposit and/or cancellation requirements. Please check with your selected KOA for details."
+      ]
+    },
+    "media": {
+      "photo_sources": [
+        {
+          "source": "Official KOA Photos",
+          "photos": [
+            {
+              "source_type": "KOA.com Photo Gallery",
+              "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbpRJEI6McKI4inC7eImT1zwu81oo--DcfHgSBOZZpUQRTNZ8uBXPsblGIBJFCnGLVFi4dI23bsRwI2d4NMYqeyLKyDTJjoA39sInOJp6prQ3W11rTBJwrD8VZybsFKRE4L6aDEoTlFXiX",
+              "description": "The campground photo albums showcase unique amenities. Photos include RV & Tent Sites, Recreation, Clubhouse, and Local Area.",
+              "example_photos": [
+                "Campground Swimming Pool: Lounge and make memories with friends and family!",
+                "Pull thru 50/30 AMP RV Campsite with Full Hookups - Equipped with a patio and picnic table perfect for quality time and making memories in beautiful Bakersfield, CA."
+              ]
+            }
+          ]
+        },
+        {
+          "source": "Google Places Photos",
+          "photos": [
+            {
+              "available": "Yes",
+              "photo_count": "Not available"
+            }
+          ]
+        },
+        {
+          "source": "Other Sources",
+          "photos": [
+            {
+              "source_type": "The Dyrt",
+              "url": "Not Available",
+              "description": "Photos typically show the well-maintained grounds with paved roads, RV sites with level pads, the swimming pool and spa area, and the on-site restaurant and bar areas."
+            },
+            {
+              "source_type": "RV Parky",
+              "url": "Not Available",
+              "description": "User-submitted photos and reviews. Photos may include RV sites, facilities, and amenities."
+            },
+            {
+              "source_type": "Campendium",
+              "url": "Not Available",
+              "description": "Not available"
+            }
+          ]
+        }
+      ]
+    },
+    "campsites": {
+      "total_sites": 0,
+      "types": [
+        {
+          "name": "Pull-Thru RV Sites",
+          "category": "RV Site",
+          "hookups": "Full hookups",
+          "electric_service": "50/30 amp",
+          "driveway": "Pull-through",
+          "features": [
+            "Solid pad",
+            "Patio",
+            "Picnic table"
+          ],
+          "max_occupancy": "Up to 6 people",
+          "max_rv_length": null,
+          "pets_allowed": null
+        },
+        {
+          "name": "Pull-Thru RV Sites - Extended Length",
+          "category": null,
+          "hookups": "Full hookups",
+          "electric_service": "50/30 amp",
+          "driveway": "Pull-through",
+          "features": [],
+          "max_occupancy": null,
+          "max_rv_length": "Up to 90 feet",
+          "pets_allowed": null
+        },
+        {
+          "name": "Deluxe Back-In RV Sites",
+          "category": null,
+          "hookups": "Full hookups",
+          "electric_service": "50/30 amp",
+          "driveway": "Back-in",
+          "features": [
+            "Propane fire pit",
+            "Covered patio"
+          ],
+          "max_occupancy": null,
+          "max_rv_length": null,
+          "pets_allowed": null
+        },
+        {
+          "name": "Pull-Thru Patio KOA Paw Pen\u2122 RV Sites",
+          "category": "RV Site",
+          "hookups": "Full hookups",
+          "electric_service": "50/30 amp",
+          "driveway": "Pull-through",
+          "features": [
+            "Private, off-leash fenced pet area",
+            "Picnic table",
+            "On-site pet station"
+          ],
+          "max_occupancy": null,
+          "max_rv_length": "Up to 30 feet",
+          "pets_allowed": true
+        },
+        {
+          "name": "Pull-Thru Patio - Big Rig Friendly / KOA Paw Pen\u2122 RV Sites",
+          "category": "RV Site",
+          "hookups": null,
+          "electric_service": null,
+          "driveway": null,
+          "features": [],
+          "max_occupancy": null,
+          "max_rv_length": "Up to 110 feet",
+          "pets_allowed": null
+        }
+      ]
+    },
+    "price_range": {
+      "rv_site_nightly": {
+        "minimum": "$49.50",
+        "maximum": "It is best to contact Bakersfield KOA Journey to confirm the maximum RV site per night."
+      },
+      "rv_site_monthly": {
+        "back_in": "$700/month + metered electric",
+        "pull_thru": "$735/month + metered electric"
+      },
+      "tent_site_nightly": "Not available",
+      "cabin_lodging_nightly": "Not available",
+      "additional_fees": {
+        "extra_person": "It is best to contact Bakersfield KOA Journey to confirm.",
+        "extra_vehicle": "It is best to contact Bakersfield KOA Journey to confirm.",
+        "pet_fees": "It is best to contact Bakersfield KOA Journey to confirm.",
+        "visitor_fees": "It is best to contact Bakersfield KOA Journey to confirm.",
+        "firewood_costs": "It is best to contact Bakersfield KOA Journey to confirm.",
+        "ice_costs": "It is best to contact Bakersfield KOA Journey to confirm."
+      },
+      "discounts": {
+        "military_first_responder": "10% off, valid military, state, or federal service ID required at check-in. Not valid on stays of 28 days or more. Discount applies to site registration fees only. This discount cannot be combined with any other discounts or offers including KOA Rewards.",
+        "koa_rewards": "Save 10% at check out with KOA Rewards.",
+        "other_discounts": [
+          "Give the Gift of a Getaway and Save Up To 35%! Valid December 01, 2025 - June 14, 2026. May be combined with the KOA Rewards discount. Not valid on existing reservations or stays of 28 nights or longer. Minimum stay requirements, site exclusions and blackout dates may apply, including major holidays and events. Valid at participating locations only. Reservation required. Subject to availability.",
+          "Care Camps Weekend May 8\u20139, 2026: Stay at a participating KOA campground on Friday, May 8, and receive 50%* off your Saturday, May 9 stay. KOA will then donate 50% of the funds raised from Saturday night's stays to the Care Camps Foundation."
+        ]
+      },
+      "deposit_and_cancellation": {
+        "deposit_required": "Reservations made after the cancellation deadlines require nonrefundable deposits.",
+        "cancellation_policy": {
+          "effective_date": "10/1/24",
+          "notice": "cancellations require a call to the campground. Text and email notifications of cancellations are not accepted.",
+          "refund_requirements": [
+            "To receive a refund of your deposit (less a $20 administrative cancellation fee), you must cancel before the deadlines.",
+            "RV & Tent Sites: 7 days cancellation notice required. Call the KOA you made your reservation with by 4 p.m., seven days before your scheduled arrival.",
+            "Lodging & Accommodations: 14 days cancellation notice required. Call the KOA you made your reservation with by 4 p.m., fourteen days before your scheduled arrival.",
+            "24-Hour California Law: For guests booking accommodations in California, a full refund will be given for reservations canceled within 24 hours of booking, provided the arrival date is at least 72 hours after the time of booking. The law only applies to reservations that were confirmed at least 72 hours before check-in."
+          ]
+        },
+        "refund_policy": [
+          "Cancellations made after the deadlines will result in forfeiture of the full deposit.",
+          "No refunds are given due to the discomforts of nature, including no-shows and early checkouts.",
+          "No refunds are given on or after the arrival date.",
+          "Refunds will be processed using the original credit/debit card, with no exceptions.",
+          "The cancellation policy may be amended during a Regional/National travel disruption.",
+          "Holidays and special events may have unique deposit and/or cancellation requirements. Check with Bakersfield KOA Journey for details."
+        ]
+      }
+    },
+    "links": [
+      {
+        "Title": "Bakersfield KOA Journey: Your California Camping Getaway",
+        "Type": "Reservation",
+        "Description": "Provides information on booking a stay at Bakersfield KOA Journey, highlighting RV site options and amenities. Includes a straightforward booking process description.",
+        "URL": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFeGmp7MwNto60J4E4nUMhwM-vGiuZEJxEE-gbdrXkAYskf2x2gttQmzXP-jbk5g6Gj5eNWudx5rR95VMLN3gGBxffOeTrrSX0eFuEONDAH9osWJUq_A450t5ZT7GOBHd_EqvQ="
+      },
+      {
+        "Title": "Bakersfield KOA Journey Campground Reservations",
+        "Type": "Reservation",
+        "Description": "Online campground reservations for Bakersfield KOA Journey.",
+        "URL": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGSjIEt7_J2fJZ8OCeqs71WQ5wbP1-gLGRtRc_vobQzam21KhBSQjAgjcbHD-niCUpR_18AA6JNmwYFPxpIkaOg5C5JEyn0gggpfBS2-IxwI7M0LgFoe1OieQxRHJMeGXjKJ1XE-td46KvcyA="
+      },
+      {
+        "Title": "Bakersfield KOA Journey",
+        "Type": "Reservation",
+        "Description": "Provides phone numbers for reservations and information.",
+        "URL": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHENQoUjeatEhW2ZpLSu9zTJsrEEy9Up-KMkBwSaFYeAcL3l258_Ep6r644hZDuGHp7QpVgxTZftmA8-I7rEjHTvZ-Lj_s9LB1biBacM7JPPUVp_rkv-OGH-7HjlKwid-5jz_QxZgjjyLfFawEgIU5KEotb8Zwx_gnZcYGESn0="
+      },
+      {
+        "Title": "Extended Stay Camping Options at Bakersfield KOA Journey",
+        "Type": "Reservation",
+        "Description": "Information on booking extended stays, including contact details (phone and email) and monthly rates.",
+        "URL": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUkDYDN9WeC6YO3-xsXr9JCKEDT_Hc1Qo3343kXSIdXfRQJYu8_t5q1F0DLK6ZFt6P1O3c9i_srYkBhNuELkVxKMwmL8g1NfAYxgUTSsfnO-i1WBmpe5MYZljQjtOAO-zWSPamInVi15iWXNZh2kZWWDQ="
+      },
+      {
+        "Title": "Visit Bakersfield - Central Valley",
+        "Type": "Tourism",
+        "Description": "Provides information on attractions, dining, and events in Bakersfield. Includes links to VisitBakersfield.com.",
+        "URL": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGffIW7Hmokx6UpkGJ36H_eZViRZZ7UQDVLbLPdvsea_VTVe6Sdbvshq0_yFIjLIzhPBzMKElwj5AZ0UM0CDNqqWiBEHoCM05ftItR5VLHUHu2r-VZu62HIna0cWEWOhVnig_hXcOtxRgjMpFsPlUg="
+      },
+      {
+        "Title": "Bakersfield | Visit California",
+        "Type": "Tourism",
+        "Description": "Information on Bakersfield's attractions, including the Arts District, Fox Theater, and Kern County Museum. Mentions the closure of Buck Owens' Crystal Palace in August 2025.",
+        "URL": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHULR19sATFL01bA8xHn_Hgbvz0OqmJkaz4mj7qEXQupHy4zZtto3OLwMNxJ4xtttIyaVuyi8DseDSv73TUfuRxn6lenxGW5Jp-XpV3ydoYwHNAyu7T-6J0k_sjc_FhDB715ZkSH2CYETUnDtKp6oJl0n"
+      }
+    ],
+    "search_facets": {
+      "site_types": [
+        "RV"
+      ],
+      "amperage": [
+        "30",
+        "50"
+      ],
+      "hookups": [
+        "Electric",
+        "Full Hookups",
+        "Sewer",
+        "Water"
+      ],
+      "max_vehicle_length": 110,
+      "price_tier": "Standard",
+      "features": [
+        "Big Rig Access",
+        "Campfire Allowed",
+        "Laundry",
+        "Patio",
+        "Pets Allowed",
+        "Picnic Table",
+        "Pool",
+        "Pull-thru Sites",
+        "Restrooms",
+        "Showers"
+      ],
+      "recreation": [
+        "Playground",
+        "Pool",
+        "Swimming"
+      ],
+      "campground_type": [
+        "Private"
+      ]
+    },
+    "search_content": "Bakersfield KOA Journey is a campground located in Bakersfield, CA.\n\nBakersfield KOA Journey is a full-service RV campground designed for convenience and comfort, making it an ideal oasis for travelers. Located in Bakersfield, the \"Gateway to Central Valley\" and the \"Country Music Capital of the West Coast,\" this KOA offers a range of amenities and activities for an unforgettable outdoor experience for families and friends. It's a great place to rest and enjoy time with loved ones.\n\nThe campground is located in the Central Valley region of California.\n\nThe landscape includes trees and greenery.\n\nAmenities include: Clean and well-maintained restrooms are available Hot showers are available For guest convenience Available for RV waste disposal Deluxe Back-In RV sites include a propane firepit Open year-round Available for relaxation A fenced, off-leash area for dogs For children Stay active during your stay Available for playing For family fun Stock up on camping essentials Onsite snack bar available Crest Bar & Grill offers convenient onsite dining A bar is available for socializing Upgraded Wi-Fi is available Available for gatherings Likely available at RV sites Propane fire pits available at some sites A large clubhouse is available Available for group events\n\nOn-site activities: Swimming Pool: Relax by the pool, take a swim, or unwind in the hot tub. The pool is open year-round due to the mild climate. KampK9\u00ae: Fenced dog park for off-leash play. Playground: Available for kids. Corn Hole: Enjoy a game of corn hole. Gym: Stay active at the on-site fitness center. Camp Store: Stock up on camping essentials. Laundry Room: Available for guests. Clubhouse: A large clubhouse is available, suitable for meetups and rallies. Mini Golf: Enjoy a round of mini golf.\n\nCampsite types available: Pull-Thru RV Sites; Pull-Thru RV Sites - Extended Length; Deluxe Back-In RV Sites; Pull-Thru Patio KOA Paw Pen\u2122 RV Sites; Pull-Thru Patio - Big Rig Friendly / KOA Paw Pen\u2122 RV Sites.",
+    "photo_sources": {}
+  }
+}

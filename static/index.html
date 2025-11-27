@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bakersfield KOA Journey - Campsage</title>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <!-- Google Maps JavaScript API with Places library for contextual widget -->
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB_m4hT4FHoxiZ_JcuHteaVpGbSmwxvmz4&libraries=places&v=alpha&callback=initGoogleMaps"></script>
+    <script>
+        // Callback when Google Maps API is loaded
+        function initGoogleMaps() {
+            console.log('Google Maps API loaded');
+            window.googleMapsReady = true;
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #1cbb64;
+            --primary-dark: #17a055;
+            --bg: #f5f5f5;
+            --text: #333;
+            --text-light: #666;
+            --text-muted: #999;
+            --border: #e0e0e0;
+            --card-bg: #fff;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* Map Thumbnail */
+        .map-thumbnail {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .map-thumbnail:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .map-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .map-thumbnail-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 0.5rem 0.4rem 0.3rem;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .map-thumbnail-overlay i {
+            width: 12px;
+            height: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .map-thumbnail {
+                width: 100%;
+                height: 150px;
+            }
+        }
+
+        /* Image Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: 200px 200px;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .gallery-main {
+            grid-row: span 2;
+        }
+
+        .gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .gallery img:hover {
+            opacity: 0.9;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        /* Amenities Grid - Campspot Style */
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .amenity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        .amenity-item i {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* Site Types Table */
+        .site-types-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .site-types-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-bottom: 2px solid var(--border);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .site-types-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .site-types-table tr:hover {
+            background: #fafafa;
+        }
+
+        .site-type-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .site-type-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .feature-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.5rem;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .feature-tag i {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Quick Facts Grid */
+        .quick-facts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .fact-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fact-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .fact-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* Markdown Content */
+        .markdown-content h1 {
+            font-size: 1.3rem;
+            color: var(--text);
+            margin: 1.5rem 0 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .markdown-content h1:first-child {
+            margin-top: 0;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.1rem;
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        .markdown-content h3 {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin: 1rem 0 0.5rem;
+        }
+
+        .markdown-content p {
+            margin-bottom: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+            color: var(--text-light);
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.35rem;
+        }
+
+        .markdown-content strong {
+            color: var(--text);
+        }
+
+        .markdown-content blockquote {
+            margin: 1rem 0;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            color: var(--text);
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .markdown-content th,
+        .markdown-content td {
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 1.5rem 0;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        /* Chat Input Bar - Fixed at bottom like Gemini */
+        .chat-input-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-input-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            outline: none;
+            font-size: 1rem;
+            background: #f8f9fa;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(28, 187, 100, 0.1);
+            background: white;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-send {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .chat-send:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .chat-send:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-send i {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Conversation cards in page flow */
+        .conversation-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .conversation-question {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .conversation-question i {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .conversation-question-text {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .conversation-answer {
+            padding: 1.5rem;
+        }
+
+        .conversation-answer-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .conversation-answer-header i {
+            color: var(--primary);
+        }
+
+        .agents-used {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-left: auto;
+        }
+
+        .agent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.5rem;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .agent-badge i {
+            color: var(--primary);
+        }
+
+        .conversation-answer-content {
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .conversation-answer-content p {
+            margin: 0 0 0.75rem;
+        }
+
+        .conversation-answer-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .conversation-answer-content ul,
+        .conversation-answer-content ol {
+            margin: 0.5rem 0 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .conversation-answer-content li {
+            margin-bottom: 0.35rem;
+        }
+
+        .conversation-answer-content strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .conversation-answer-content a {
+            color: var(--primary);
+        }
+
+        .conversation-answer-content blockquote {
+            margin: 1rem 0;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .conversation-answer-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .conversation-answer-content th,
+        .conversation-answer-content td {
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .conversation-answer-content th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* Place Cards Grid - Web Components */
+        .places-grid-web-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .place-card-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .place-card-wrapper:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Style the web component itself */
+        gmp-place-details {
+            width: 100%;
+            display: block;
+            font-size: 1.2em;
+            /* Scale up all content including photos */
+            --gmp-place-details-photo-height: 250px;
+            /* Make photos taller */
+            --gmp-place-details-photo-max-height: 300px;
+        }
+
+        /* Target the photo container inside the web component */
+        gmp-place-details::part(photo) {
+            height: 250px;
+            object-fit: cover;
+        }
+
+        /* Make the overall card taller to accommodate larger photos */
+        gmp-place-details::part(card) {
+            min-height: 400px;
+        }
+
+        /* Google Attribution */
+        .google-attribution {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .google-attribution img {
+            height: 16px;
+        }
+
+        /* Google Maps Contextual Widget */
+        .maps-widget-container {
+            margin-top: 1rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: #f8f9fa;
+            padding: 1rem;
+        }
+
+        .maps-widget-container gmp-place-contextual {
+            width: 100%;
+            display: block;
+        }
+
+        /* Style overrides for the widget to fit better */
+        .maps-widget-container gmp-place-contextual::part(container) {
+            max-width: 100%;
+        }
+
+        /* Directions Map */
+        .directions-container {
+            margin-top: 1rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .directions-map {
+            width: 100%;
+            height: 350px;
+            border: none;
+        }
+
+        .directions-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid var(--border);
+        }
+
+        .directions-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #4285f4;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .directions-link:hover {
+            background: #3367d6;
+        }
+
+        .directions-link i {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Citations */
+        .conversation-citations {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .conversation-citations-title {
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .conversation-citations ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+
+        .conversation-citations li {
+            margin-bottom: 0.25rem;
+        }
+
+        .conversation-citations a {
+            color: var(--primary);
+        }
+
+        /* Response Type Indicator */
+        .response-type-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 0.5rem;
+        }
+
+        .response-type-indicator.places {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .response-type-indicator.directions {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .response-type-indicator.campground_info {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .response-type-indicator.weather {
+            background: #e0f7fa;
+            color: #00838f;
+        }
+
+        .response-type-indicator.search {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .response-type-indicator.text {
+            background: #f5f5f5;
+            color: #616161;
+        }
+
+        .response-type-indicator i {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Response type specific card styling */
+        .conversation-card.response-places .conversation-answer-content,
+        .conversation-card.response-directions .conversation-answer-content {
+            font-size: 0.95rem;
+        }
+
+
+        .conversation-card.response-campground_info .conversation-answer-content {
+            background: linear-gradient(to bottom, transparent, rgba(255, 243, 224, 0.3));
+            padding: 1rem;
+            border-radius: 8px;
+            margin: -0.5rem;
+        }
+
+        .conversation-card.response-weather .conversation-answer-content {
+            background: linear-gradient(135deg, rgba(224, 247, 250, 0.5), rgba(179, 229, 252, 0.3));
+            padding: 1rem;
+            border-radius: 8px;
+            margin: -0.5rem;
+        }
+
+        /* Typing indicator card */
+        .typing-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+
+        /* Add bottom padding for fixed input bar */
+        .container {
+            padding-bottom: 100px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 150px 150px;
+            }
+
+            .gallery-main {
+                grid-column: span 2;
+                grid-row: span 1;
+            }
+
+            .amenities-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .site-types-table {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1 id="campground-name">Loading...</h1>
+                <div class="header-meta">
+                    <span id="location-meta"><i data-lucide="map-pin"></i> Loading...</span>
+                    <span id="rating-meta"><i data-lucide="star"></i> 4.5</span>
+                    <span><i data-lucide="tent"></i> RV & Tent Sites</span>
+                </div>
+            </div>
+            <a id="map-link" href="#" target="_blank" title="Open in Google Maps">
+                <div class="map-thumbnail" id="map-thumbnail">
+                    <img id="map-image" src="" alt="Map location">
+                    <div class="map-thumbnail-overlay">
+                        <i data-lucide="map"></i>
+                        <span>View Map</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="gallery" id="gallery">
+            <div class="loading">Loading images...</div>
+        </div>
+
+        <!-- Quick Facts -->
+        <div class="card">
+            <div class="card-title"><i data-lucide="info"></i> Quick Facts</div>
+            <div class="quick-facts" id="quick-facts">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Site Types -->
+        <div class="card">
+            <div class="card-title"><i data-lucide="layout-grid"></i> Site Types</div>
+            <table class="site-types-table" id="site-types-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Hookups</th>
+                        <th>Electric</th>
+                        <th>Features</th>
+                    </tr>
+                </thead>
+                <tbody id="site-types-body">
+                    <tr>
+                        <td colspan="4" class="loading">Loading site types...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Park Features / Amenities -->
+        <div class="card">
+            <div class="card-title"><i data-lucide="sparkles"></i> Park Features</div>
+            <div class="amenities-grid" id="amenities-grid">
+                <div class="loading">Loading amenities...</div>
+            </div>
+        </div>
+
+        <!-- Editorial Content -->
+        <div class="card">
+            <div class="card-title"><i data-lucide="book-open"></i> Campground Guide</div>
+            <div class="markdown-content" id="markdown-content">
+                <div class="loading">Generating guide...</div>
+            </div>
+        </div>
+
+        <!-- Conversation Area - Q&A cards appear here in page flow -->
+        <div id="conversation-area"></div>
+    </div>
+
+    <!-- Chat Input Bar - Fixed at bottom like Gemini -->
+    <div class="chat-input-bar">
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chat-input"
+                placeholder="Ask about this campground, nearby attractions, weather...">
+            <button class="chat-send" id="chat-send" aria-label="Send message">
+                <i data-lucide="send"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const CAMPGROUND_ID = 'koa_bakersfield';
+        const API_BASE = 'http://localhost:8002';
+        const GOOGLE_MAPS_API_KEY = 'AIzaSyB_m4hT4FHoxiZ_JcuHteaVpGbSmwxvmz4';
+
+        // Render Google Maps Static API thumbnail
+        function renderMapThumbnail(location, campgroundName) {
+            const lat = location.latitude;
+            const lng = location.longitude;
+
+            if (!lat || !lng) {
+                // Hide map thumbnail if no coordinates
+                document.getElementById('map-thumbnail').style.display = 'none';
+                return;
+            }
+
+            // Build Google Maps Static API URL
+            // Using a red marker at the campground location
+            const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
+                `center=${lat},${lng}` +
+                `&zoom=13` +
+                `&size=240x240` +  // 2x for retina displays
+                `&scale=2` +
+                `&maptype=roadmap` +
+                `&markers=color:red%7C${lat},${lng}` +
+                `&key=${GOOGLE_MAPS_API_KEY}`;
+
+            // Set the thumbnail image
+            document.getElementById('map-image').src = mapUrl;
+
+            // Build Google Maps link URL (opens in new tab)
+            // Uses place search which works well for campgrounds
+            const encodedName = encodeURIComponent(campgroundName || 'Campground');
+            const mapsLinkUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${encodedName}`;
+
+            // Alternative: Direct coordinates link
+            const directMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+            document.getElementById('map-link').href = directMapsUrl;
+        }
+
+        // Amenity to icon mapping
+        const amenityIcons = {
+            'pool': 'waves',
+            'swimming': 'waves',
+            'hot tub': 'bath',
+            'sauna': 'bath',
+            'wifi': 'wifi',
+            'laundry': 'shirt',
+            'shower': 'droplets',
+            'restroom': 'door-closed',
+            'dump': 'trash-2',
+            'propane': 'flame',
+            'fire': 'flame',
+            'playground': 'baby',
+            'dog': 'dog',
+            'pet': 'dog',
+            'gym': 'dumbbell',
+            'fitness': 'dumbbell',
+            'golf': 'target',
+            'store': 'store',
+            'camp store': 'store',
+            'restaurant': 'utensils',
+            'bar': 'wine',
+            'grill': 'flame',
+            'bbq': 'flame',
+            'picnic': 'trees',
+            'pavilion': 'home',
+            'clubhouse': 'home',
+            'meeting': 'users',
+            'corn': 'gamepad-2',
+            'game': 'gamepad-2',
+            'mini golf': 'flag',
+            'default': 'check-circle'
+        };
+
+        function getAmenityIcon(amenity) {
+            const lower = amenity.toLowerCase();
+            for (const [key, icon] of Object.entries(amenityIcons)) {
+                if (lower.includes(key)) return icon;
+            }
+            return amenityIcons.default;
+        }
+
+        async function loadCampgroundData() {
+            try {
+                // Load both endpoints
+                const [mdResponse, jsonResponse] = await Promise.all([
+                    fetch(`${API_BASE}/api/campground/${CAMPGROUND_ID}/markdown`),
+                    fetch(`${API_BASE}/api/campground/${CAMPGROUND_ID}`)
+                ]);
+
+                const mdData = await mdResponse.json();
+                const jsonData = await jsonResponse.json();
+
+                renderPage(mdData, jsonData);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('campground-name').textContent = 'Error loading campground';
+            }
+        }
+
+        function renderPage(mdData, jsonData) {
+            // Header
+            document.getElementById('campground-name').textContent = mdData.name || 'Campground';
+            if (mdData.location) {
+                document.getElementById('location-meta').innerHTML =
+                    `<i data-lucide="map-pin"></i> ${mdData.location.city}, ${mdData.location.state}`;
+
+                // Render map thumbnail using location data
+                renderMapThumbnail(mdData.location, mdData.name);
+            }
+
+            // Gallery
+            const gallery = document.getElementById('gallery');
+            if (mdData.images && mdData.images.length > 0) {
+                gallery.innerHTML = mdData.images.slice(0, 5).map((img, i) => `
+            <div class="${i === 0 ? 'gallery-main' : ''}">
+                <img src="${img.url}" alt="${img.title}" onerror="this.parentElement.style.display='none'">
+            </div>
+        `).join('');
+            }
+
+            // Quick Facts
+            const quickFacts = document.getElementById('quick-facts');
+            quickFacts.innerHTML = `
+        <div class="fact-item">
+            <span class="fact-label">Style</span>
+            <span class="fact-value">RV Resort</span>
+        </div>
+        <div class="fact-item">
+            <span class="fact-label">Best For</span>
+            <span class="fact-value">Road Trippers & Families</span>
+        </div>
+        <div class="fact-item">
+            <span class="fact-label">Pets</span>
+            <span class="fact-value">Dog Friendly</span>
+        </div>
+        <div class="fact-item">
+            <span class="fact-label">Hookups</span>
+            <span class="fact-value">Full (50/30 Amp)</span>
+        </div>
+    `;
+
+            // Site Types Table
+            const siteTypesBody = document.getElementById('site-types-body');
+            if (jsonData.site_types && jsonData.site_types.length > 0) {
+                // Get site type details from canonical if available
+                siteTypesBody.innerHTML = jsonData.site_types.map(name => {
+                    // Parse features from name
+                    const hasFullHookup = name.toLowerCase().includes('full') || name.toLowerCase().includes('rv');
+                    const isPullThru = name.toLowerCase().includes('pull-thru') || name.toLowerCase().includes('pull thru');
+                    const hasPatio = name.toLowerCase().includes('patio') || name.toLowerCase().includes('deluxe');
+                    const isPetFriendly = name.toLowerCase().includes('paw') || name.toLowerCase().includes('pet');
+                    const isBigRig = name.toLowerCase().includes('big rig') || name.toLowerCase().includes('extended');
+
+                    const features = [];
+                    if (isPullThru) features.push({ icon: 'move-horizontal', text: 'Pull-Thru' });
+                    if (hasPatio) features.push({ icon: 'square', text: 'Patio' });
+                    if (isPetFriendly) features.push({ icon: 'dog', text: 'Pet Area' });
+                    if (isBigRig) features.push({ icon: 'truck', text: 'Big Rig' });
+
+                    return `
+                <tr>
+                    <td><span class="site-type-name">${name.replace(/KOA |Paw Pen™|®/g, '').trim()}</span></td>
+                    <td>${hasFullHookup ? 'Full Hookups' : 'Partial'}</td>
+                    <td>50/30 Amp</td>
+                    <td>
+                        <div class="site-type-features">
+                            ${features.map(f => `
+                                <span class="feature-tag">
+                                    <i data-lucide="${f.icon}"></i> ${f.text}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </td>
+                </tr>
+            `;
+                }).join('');
+            }
+
+            // Amenities Grid
+            const amenitiesGrid = document.getElementById('amenities-grid');
+            if (jsonData.amenities && jsonData.amenities.length > 0) {
+                amenitiesGrid.innerHTML = jsonData.amenities.map(amenity => `
+            <div class="amenity-item">
+                <i data-lucide="${getAmenityIcon(amenity)}"></i>
+                <span>${amenity}</span>
+            </div>
+        `).join('');
+            }
+
+            // Markdown Content
+            if (mdData.markdown) {
+                let md = mdData.markdown;
+                if (md.startsWith('```markdown')) {
+                    md = md.replace(/^```markdown\n?/, '').replace(/\n?```$/, '');
+                } else if (md.startsWith('```')) {
+                    md = md.replace(/^```\n?/, '').replace(/\n?```$/, '');
+                }
+                document.getElementById('markdown-content').innerHTML = marked.parse(md);
+
+                // Store for chat context
+                campgroundContext = md;
+            }
+
+            // Initialize Lucide icons
+            lucide.createIcons();
+        }
+
+        // Chat state
+        let chatHistory = [];
+        let campgroundContext = null; // Will store the initial markdown content
+        let isTyping = false;
+
+        // Escape HTML for user input
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show typing indicator as a card
+        function showTypingCard(question) {
+            const container = document.getElementById('conversation-area');
+
+            const card = document.createElement('div');
+            card.className = 'conversation-card';
+            card.id = 'typing-card';
+            card.innerHTML = `
+        <div class="conversation-question">
+            <i data-lucide="message-circle" style="width:20px;height:20px;"></i>
+            <div class="conversation-question-text">${escapeHtml(question)}</div>
+        </div>
+        <div class="conversation-answer">
+            <div class="typing-indicator">
+                <i data-lucide="bot" style="width:16px;height:16px;color:var(--primary);"></i>
+                <span>Thinking</span>
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+    `;
+
+            container.appendChild(card);
+            lucide.createIcons();
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Generate star rating HTML
+        function renderStars(rating) {
+            if (!rating) return '';
+            const fullStars = Math.floor(rating);
+            const hasHalf = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+            let html = '<div class="place-card-stars">';
+            for (let i = 0; i < fullStars; i++) {
+                html += '<svg class="place-card-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+            }
+            if (hasHalf) {
+                html += '<svg class="place-card-star" viewBox="0 0 24 24" fill="currentColor"><defs><linearGradient id="half"><stop offset="50%" stop-color="#fbbc04"/><stop offset="50%" stop-color="#dadce0"/></linearGradient></defs><path fill="url(#half)" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+            }
+            for (let i = 0; i < emptyStars; i++) {
+                html += '<svg class="place-card-star empty" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        // Build place photo URL from photo_reference (uses our proxy to avoid CORS issues)
+        function getPlacePhotoUrl(photoRef, maxWidth = 400) {
+            if (!photoRef) return null;
+            // Use our backend proxy which handles the Google API redirect properly
+            return `${API_BASE}/api/place-photo/${encodeURIComponent(photoRef)}?maxwidth=${maxWidth}`;
+        }
+
+        // Build Google Maps URL for a place
+        function getPlaceMapsUrl(place) {
+            if (place.place_id) {
+                return `https://www.google.com/maps/place/?q=place_id:${place.place_id}`;
+            }
+            if (place.lat && place.lng) {
+                return `https://www.google.com/maps?q=${place.lat},${place.lng}`;
+            }
+            return `https://www.google.com/maps/search/${encodeURIComponent(place.name)}`;
+        }
+
+        // Render price level as $ symbols
+        function renderPriceLevel(level) {
+            if (!level) return '';
+            return '$'.repeat(level);
+        }
+
+        // Get icon for place type
+        function getPlaceTypeIcon(types) {
+            if (!types || types.length === 0) return 'map-pin';
+            // Check all types, not just the first one
+            const iconMap = {
+                'restaurant': 'utensils',
+                'food': 'utensils',
+                'meal_takeaway': 'utensils',
+                'cafe': 'coffee',
+                'grocery_or_supermarket': 'shopping-cart',
+                'supermarket': 'shopping-cart',
+                'gas_station': 'fuel',
+                'park': 'trees',
+                'natural_feature': 'mountain',
+                'hiking_area': 'footprints',
+                'trail': 'footprints',
+                'shopping_mall': 'shopping-bag',
+                'store': 'store',
+                'pharmacy': 'pill',
+                'hospital': 'hospital',
+                'lodging': 'bed',
+                'campground': 'tent',
+                'rv_park': 'caravan',
+                'tourist_attraction': 'camera',
+                'point_of_interest': 'map-pin',
+                'establishment': 'building',
+            };
+            // Check each type in order
+            for (const type of types) {
+                if (iconMap[type]) {
+                    return iconMap[type];
+                }
+            }
+            return 'map-pin';
+        }
+
+        // Handle image load error by replacing with icon placeholder
+        function handleImageError(img) {
+            // Get the place type from data attribute
+            const placeType = img.getAttribute('data-place-type') || 'map-pin';
+            // Hide the broken image and show placeholder
+            img.style.display = 'none';
+            // Create and insert placeholder
+            const placeholder = document.createElement('div');
+            placeholder.className = 'place-card-no-image';
+            placeholder.innerHTML = `<i data-lucide="${placeType}"></i>`;
+            img.parentElement.insertBefore(placeholder, img);
+            lucide.createIcons();
+        }
+
+        // Render directions with embedded Google Maps
+        function renderDirectionsMap(directions) {
+            if (!directions) return '';
+
+            const origin = encodeURIComponent(directions.origin);
+            const destination = encodeURIComponent(directions.destination || `${directions.destination_lat},${directions.destination_lng}`);
+
+            // Google Maps Embed API for directions
+            const embedUrl = `https://www.google.com/maps/embed/v1/directions?key=${GOOGLE_MAPS_API_KEY}&origin=${origin}&destination=${destination}&mode=driving`;
+
+            // Direct Google Maps URL for "Open in Maps" button
+            const mapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+
+            return `
+        <div class="directions-container">
+            <iframe
+                class="directions-map"
+                src="${embedUrl}"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+            <div class="directions-footer">
+                <div class="google-attribution" style="margin:0;padding:0;border:none;">
+                    <img src="https://www.gstatic.com/images/branding/googlelogo/2x/googlelogo_color_74x24dp.png" alt="Google" style="height:18px;">
+                    <span>Map data by Google</span>
+                </div>
+                <a href="${mapsUrl}" target="_blank" class="directions-link">
+                    <i data-lucide="navigation"></i>
+                    Open in Google Maps
+                </a>
+            </div>
+        </div>
+    `;
+        }
+
+        // Render Google Maps contextual widget from token
+        function renderMapsWidget(token) {
+            if (!token) return '';
+            // The gmp-place-contextual web component renders the widget
+            // Using vertical layout for more detailed cards
+            return `
+        <div class="maps-widget-container">
+            <gmp-place-contextual context-token="${token}">
+                <gmp-place-contextual-list-config layout="vertical"></gmp-place-contextual-list-config>
+            </gmp-place-contextual>
+        </div>
+    `;
+        }
+
+        // Render place cards using gmp-place-details web components
+        // This is a fallback when widget token isn't available
+        // Uses place IDs from grounding to display rich details and photos
+        function renderPlaceCardsFromIDs(places) {
+            if (!places || places.length === 0) return '';
+
+            const cardsHtml = places.map((place) => {
+                if (!place.place_id) return '';
+
+                return `
+                    <div class="place-card-wrapper">
+                        <gmp-place-details>
+                            <gmp-place-details-place-request place-id="${place.place_id}"></gmp-place-details-place-request>
+                        </gmp-place-details>
+                    </div>
+                `;
+            }).join('');
+
+            if (!cardsHtml) return '';
+
+            return `
+                <div class="places-grid-web-components">
+                    ${cardsHtml}
+                </div>
+            `;
+        }
+
+        // Get response type icon and label
+        function getResponseTypeInfo(responseType) {
+            const types = {
+                'places': { icon: 'map-pin', label: 'Places' },
+                'directions': { icon: 'navigation', label: 'Directions' },
+                'campground_info': { icon: 'tent', label: 'Campground Info' },
+                'weather': { icon: 'cloud-sun', label: 'Weather' },
+                'search': { icon: 'search', label: 'Search' },
+                'text': { icon: 'message-circle', label: 'Response' }
+            };
+            return types[responseType] || types['text'];
+        }
+
+        // Update typing card with actual answer (in place)
+        function updateTypingCardWithAnswer(answer, citations = [], places = [], directions = null, mapsWidgetToken = null, agentsUsed = [], responseType = 'text') {
+            const typingCard = document.getElementById('typing-card');
+            if (!typingCard) return;
+
+            // Add response type class to card for styling
+            typingCard.classList.add(`response-${responseType}`);
+
+            // Prefer widget if available, otherwise render place cards from IDs
+            let placesHtml = '';
+            if (mapsWidgetToken) {
+                placesHtml = renderMapsWidget(mapsWidgetToken);
+            } else if (places && places.length > 0) {
+                // Fallback: use place IDs with gmp-place-details components
+                placesHtml = renderPlaceCardsFromIDs(places);
+            }
+
+            // Build directions map HTML if present
+            const directionsHtml = renderDirectionsMap(directions);
+
+            // Build citations HTML if present
+            let citationsHtml = '';
+            if (citations.length > 0) {
+                citationsHtml = `
+            <div class="conversation-citations">
+                <div class="conversation-citations-title">Sources</div>
+                <ul>
+                    ${citations.map(c => `<li><a href="${c.url}" target="_blank">${c.title || c.url}</a></li>`).join('')}
+                </ul>
+            </div>
+        `;
+            }
+
+            // Build agents used HTML
+            let agentsHtml = '';
+            if (agentsUsed && agentsUsed.length > 0) {
+                const agentBadges = agentsUsed.map(agent => {
+                    // Choose icon based on agent name
+                    let icon = 'bot';
+                    if (agent.toLowerCase().includes('maps')) icon = 'map-pin';
+                    else if (agent.toLowerCase().includes('search')) icon = 'search';
+                    else if (agent.toLowerCase().includes('campground')) icon = 'tent';
+                    return `<span class="agent-badge"><i data-lucide="${icon}" style="width:12px;height:12px;"></i> ${agent}</span>`;
+                }).join('');
+                agentsHtml = `<div class="agents-used">${agentBadges}</div>`;
+            }
+
+            // Build response type indicator
+            const typeInfo = getResponseTypeInfo(responseType);
+            const responseTypeHtml = `
+                <span class="response-type-indicator ${responseType}">
+                    <i data-lucide="${typeInfo.icon}"></i>
+                    ${typeInfo.label}
+                </span>
+            `;
+
+            // Parse markdown
+            let contentHtml = marked.parse(answer);
+
+            // Update the answer section in place
+            const answerDiv = typingCard.querySelector('.conversation-answer');
+            answerDiv.innerHTML = `
+        <div class="conversation-answer-header">
+            <i data-lucide="bot" style="width:16px;height:16px;"></i>
+            <span>Campground Assistant</span>
+            ${responseTypeHtml}
+            ${agentsHtml}
+        </div>
+        <div class="conversation-answer-content">
+            ${contentHtml}
+        </div>
+        ${directionsHtml}
+        ${placesHtml}
+        ${citationsHtml}
+    `;
+
+            // Remove the typing-card ID so it won't be targeted again
+            typingCard.removeAttribute('id');
+
+            lucide.createIcons();
+            typingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send');
+            const message = input.value.trim();
+
+            if (!message || isTyping) return;
+
+            // Clear input
+            input.value = '';
+
+            // Add to history
+            chatHistory.push({ role: 'user', content: message });
+
+            // Show typing card
+            isTyping = true;
+            sendBtn.disabled = true;
+            showTypingCard(message);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        campground_id: CAMPGROUND_ID,
+                        message: message,
+                        history: chatHistory.slice(0, -1),
+                        campground_context: campgroundContext,
+                        use_grounding: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get response');
+                }
+
+                const data = await response.json();
+
+                // Update the typing card in place with the answer, places, directions, widget, agents used, and response type
+                updateTypingCardWithAnswer(
+                    data.response,
+                    data.citations || [],
+                    data.places || [],
+                    data.directions || null,
+                    data.maps_widget_token || null,
+                    data.agents_used || [],
+                    data.response_type || 'text'
+                );
+
+                // Add to history
+                chatHistory.push({ role: 'assistant', content: data.response });
+
+            } catch (error) {
+                updateTypingCardWithAnswer('Sorry, I encountered an error. Please try again.', [], [], null);
+                console.error('Chat error:', error);
+            }
+
+            isTyping = false;
+            sendBtn.disabled = false;
+            input.focus();
+        }
+
+        // Initialize chat
+        function initChat() {
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send');
+
+            sendBtn.addEventListener('click', sendMessage);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCampgroundData();
+            initChat();
+            lucide.createIcons();
+        });
+    </script>
+
+</body>
+
+</html>
