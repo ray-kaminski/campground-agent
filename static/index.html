@@ -598,6 +598,126 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         }
 
+        /* Rich Place Cards - from grounding metadata */
+        .rich-places-container {
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #f8faf9 0%, #eef5f1 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .rich-places-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .rich-places-header i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .rich-places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .rich-place-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .rich-place-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .rich-place-card .place-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .rich-place-card .place-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+            flex: 1;
+        }
+
+        .rich-place-card .place-maps-link {
+            color: var(--primary);
+            padding: 0.25rem;
+            display: flex;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .rich-place-card .place-maps-link:hover {
+            opacity: 1;
+        }
+
+        .rich-place-card .place-maps-link i {
+            width: 16px;
+            height: 16px;
+        }
+
+        .rich-place-card .place-description {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .rich-place-card .place-reviews {
+            margin-bottom: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .rich-place-card .place-review {
+            margin-bottom: 0.75rem;
+        }
+
+        .rich-place-card .place-review:last-child {
+            margin-bottom: 0;
+        }
+
+        .rich-place-card .review-text {
+            font-size: 0.85rem;
+            color: var(--text);
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .rich-place-card .review-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .rich-place-card .place-id-badge {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .rich-place-card gmp-place-details {
+            font-size: 0.9em;
+        }
+
         /* Style the web component itself */
         gmp-place-details {
             width: 100%;
@@ -2980,16 +3100,67 @@
         // Render place cards using gmp-place-details web components
         // This is a fallback when widget token isn't available
         // Uses place IDs from grounding to display rich details and photos
+        // Render rich place cards from grounding data (includes reviews, descriptions, etc.)
+        function renderRichPlaceCards(places) {
+            if (!places || places.length === 0) return '';
+
+            const cardsHtml = places.filter(p => p.type === 'maps' && p.place_id).map((place) => {
+                // Build reviews HTML if available
+                let reviewsHtml = '';
+                if (place.reviews && place.reviews.length > 0) {
+                    const reviewItems = place.reviews.slice(0, 2).map(review => `
+                        <div class="place-review">
+                            <div class="review-text">"${review.review || ''}"</div>
+                            ${review.relative_time ? `<div class="review-time">${review.relative_time}</div>` : ''}
+                        </div>
+                    `).join('');
+                    reviewsHtml = `<div class="place-reviews">${reviewItems}</div>`;
+                }
+
+                return `
+                    <div class="rich-place-card">
+                        <div class="place-header">
+                            <h4 class="place-title">${place.title || 'Unknown Place'}</h4>
+                            ${place.uri ? `<a href="${place.uri}" target="_blank" class="place-maps-link" title="Open in Google Maps"><i data-lucide="external-link"></i></a>` : ''}
+                        </div>
+                        ${place.text ? `<p class="place-description">${place.text}</p>` : ''}
+                        ${reviewsHtml}
+                        <div class="place-id-badge">
+                            <gmp-place-details>
+                                <gmp-place-details-place-request place-id="${place.place_id}"></gmp-place-details-place-request>
+                            </gmp-place-details>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (!cardsHtml) return '';
+
+            return `
+                <div class="rich-places-container">
+                    <div class="rich-places-header">
+                        <i data-lucide="map-pin"></i>
+                        <span>Places Found</span>
+                    </div>
+                    <div class="rich-places-grid">
+                        ${cardsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fallback: render place cards from IDs only (used when no rich data available)
         function renderPlaceCardsFromIDs(places) {
             if (!places || places.length === 0) return '';
 
             const cardsHtml = places.map((place) => {
-                if (!place.place_id) return '';
+                const placeId = place.place_id || place;
+                if (!placeId) return '';
 
                 return `
                     <div class="place-card-wrapper">
                         <gmp-place-details>
-                            <gmp-place-details-place-request place-id="${place.place_id}"></gmp-place-details-place-request>
+                            <gmp-place-details-place-request place-id="${placeId}"></gmp-place-details-place-request>
                         </gmp-place-details>
                     </div>
                 `;
@@ -3028,13 +3199,19 @@
             // Add response type class to card for styling
             typingCard.classList.add(`response-${responseType}`);
 
-            // Prefer widget if available, otherwise render place cards from IDs
+            // Prefer widget if available, then rich place cards, then basic place IDs
             let placesHtml = '';
             if (mapsWidgetToken) {
                 placesHtml = renderMapsWidget(mapsWidgetToken);
             } else if (places && places.length > 0) {
-                // Fallback: use place IDs with gmp-place-details components
-                placesHtml = renderPlaceCardsFromIDs(places);
+                // Check if we have rich place data (from grounding metadata)
+                const hasRichData = places.some(p => p.type === 'maps' && (p.text || p.reviews));
+                if (hasRichData) {
+                    placesHtml = renderRichPlaceCards(places);
+                } else {
+                    // Fallback: use place IDs with gmp-place-details components
+                    placesHtml = renderPlaceCardsFromIDs(places);
+                }
             }
 
             // Build directions map HTML if present

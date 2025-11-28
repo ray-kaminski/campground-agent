@@ -153,107 +153,101 @@ def after_model_callback(
     callback_context: CallbackContext,
     llm_response: LlmResponse
 ) -> LlmResponse | None:
-    """Callback to capture grounding metadata and inject widget token into response.
+    """Callback to capture grounding metadata and store it in session state.
 
     This runs AFTER the model generates a response but BEFORE ADK processes it.
-    Since ADK strips grounding_metadata, we inject the widget token directly into
-    the response content so the frontend can use it.
+    We extract ALL rich grounding data and store it in session state via state_delta,
+    which flows through the SSE stream to the frontend.
+    
+    Note: We use state_delta instead of custom_metadata because MapsAgent runs as
+    a sub-agent via AgentTool, and custom_metadata doesn't propagate to root-level events.
     """
-    logger.info("=== AFTER_MODEL_CALLBACK FIRED ===")
     widget_token = None
-    grounding_chunks = []
+    places = []
+    grounding_supports = []
+    retrieval_queries = []
 
-    # Log all attributes of llm_response to understand its structure
-    logger.info(f"llm_response type: {type(llm_response)}")
-    logger.info(f"llm_response attrs: {[a for a in dir(llm_response) if not a.startswith('_')]}")
-
-    # Check for grounding_metadata attribute directly
-    if hasattr(llm_response, 'grounding_metadata') and llm_response.grounding_metadata:
-        logger.info("FOUND grounding_metadata on llm_response!")
-        gm = llm_response.grounding_metadata
-        logger.info(f"grounding_metadata type: {type(gm)}")
-        logger.info(f"grounding_metadata attrs: {[a for a in dir(gm) if not a.startswith('_')]}")
-
-        # Log all grounding metadata fields
-        logger.info(f"google_maps_widget_context_token = {getattr(gm, 'google_maps_widget_context_token', 'NOT FOUND')}")
-        logger.info(f"grounding_chunks = {getattr(gm, 'grounding_chunks', 'NOT FOUND')}")
-        logger.info(f"retrieval_metadata = {getattr(gm, 'retrieval_metadata', 'NOT FOUND')}")
-
-        # Extract widget token
-        if hasattr(gm, 'google_maps_widget_context_token') and gm.google_maps_widget_context_token:
-            widget_token = gm.google_maps_widget_context_token
-            logger.info(f"Captured widget token: {widget_token[:50]}...")
-        else:
-            logger.info(f"Widget token is empty/None: {gm.google_maps_widget_context_token if hasattr(gm, 'google_maps_widget_context_token') else 'NO ATTR'}")
-
-        # Extract grounding chunks (place data) - check MAPS format first
-        if hasattr(gm, 'grounding_chunks') and gm.grounding_chunks:
-            for i, chunk in enumerate(gm.grounding_chunks):
-                chunk_data = {}
-                
-                # Check for Google Maps grounding (has place_id)
-                if hasattr(chunk, 'maps') and chunk.maps:
-                    maps_chunk = chunk.maps
-                    place_id = getattr(maps_chunk, 'place_id', None)
-                    if place_id:
-                        chunk_data = {
-                            "place_id": place_id,
-                            "title": getattr(maps_chunk, 'title', ''),
-                        }
-                        logger.info(f"Extracted Maps place_id: {place_id}")
-                
-                # Fallback to web grounding
-                elif hasattr(chunk, 'web') and chunk.web:
-                    uri = getattr(chunk.web, 'uri', '')
-                    chunk_data = {
-                        "title": getattr(chunk.web, 'title', ''),
-                        "uri": uri,
-                    }
-                
-                if chunk_data:
-                    grounding_chunks.append(chunk_data)
-            
-            logger.info(f"Total grounding_chunks extracted: {len(grounding_chunks)}")
-    else:
-        logger.info("No grounding_metadata on llm_response directly")
-
-    # Check if grounding_metadata is nested in candidates
-    if hasattr(llm_response, 'candidates') and llm_response.candidates:
-        logger.info(f"Found {len(llm_response.candidates)} candidates")
-        for i, candidate in enumerate(llm_response.candidates):
-            logger.info(f"Candidate {i} attrs: {[a for a in dir(candidate) if not a.startswith('_')]}")
+    # Extract grounding metadata
+    gm = getattr(llm_response, 'grounding_metadata', None)
+    
+    # Also check candidates (some responses have it nested there)
+    if not gm and hasattr(llm_response, 'candidates') and llm_response.candidates:
+        for candidate in llm_response.candidates:
             if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
-                logger.info(f"FOUND grounding_metadata on candidate {i}!")
                 gm = candidate.grounding_metadata
-                logger.info(f"candidate grounding_metadata: {gm}")
-                if hasattr(gm, 'google_maps_widget_context_token') and gm.google_maps_widget_context_token:
-                    widget_token = gm.google_maps_widget_context_token
-                    logger.info(f"Captured widget token from candidate: {widget_token[:50]}...")
+                break
 
-    # Inject widget data if we have token OR grounding_chunks (for fallback rendering)
-    if (widget_token or grounding_chunks) and hasattr(llm_response, 'content') and llm_response.content:
-        content = llm_response.content
+    if gm:
+        # Extract widget token
+        widget_token = getattr(gm, 'google_maps_widget_context_token', None)
 
-        # Find the text part and append the widget metadata
-        if hasattr(content, 'parts') and content.parts:
-            for part in content.parts:
-                if hasattr(part, 'text') and part.text:
-                    # Create the widget metadata block
-                    widget_metadata = json.dumps({
-                        "widget_token": widget_token,
-                        "grounding_chunks": grounding_chunks,
-                        "place_ids": [c.get("place_id") for c in grounding_chunks if c.get("place_id")]
-                    })
+        # Extract retrieval queries (what Maps searched for)
+        retrieval_queries = getattr(gm, 'retrieval_queries', []) or []
 
-                    # Append to the response text
-                    original_text = part.text
-                    part.text = f"{original_text}\n\n[MAPS_WIDGET_DATA:{widget_metadata}]"
-                    logger.info(f"Injected widget data: token={'yes' if widget_token else 'no'}, places={len(grounding_chunks)}")
-                    break
-    else:
-        logger.info(f"No widget data to inject. widget_token={widget_token is not None}, chunks={len(grounding_chunks)}")
+        # Extract grounding chunks with FULL place data
+        chunks = getattr(gm, 'grounding_chunks', []) or []
+        for chunk in chunks:
+            # Google Maps grounding
+            if hasattr(chunk, 'maps') and chunk.maps:
+                maps_chunk = chunk.maps
+                place_data = {
+                    "type": "maps",
+                    "place_id": getattr(maps_chunk, 'place_id', None),
+                    "title": getattr(maps_chunk, 'title', None),
+                    "text": getattr(maps_chunk, 'text', None),
+                    "uri": getattr(maps_chunk, 'uri', None),
+                }
+                
+                # Extract review snippets if available
+                place_answer_sources = getattr(maps_chunk, 'place_answer_sources', None)
+                if place_answer_sources:
+                    review_snippets = getattr(place_answer_sources, 'review_snippets', []) or []
+                    place_data["reviews"] = []
+                    for review in review_snippets:
+                        place_data["reviews"].append({
+                            "review": getattr(review, 'review', None),
+                            "title": getattr(review, 'title', None),
+                            "google_maps_uri": getattr(review, 'google_maps_uri', None),
+                            "relative_time": getattr(review, 'relative_publish_time_description', None),
+                        })
+                
+                if place_data.get("place_id"):
+                    places.append(place_data)
 
-    # Return None to let the (possibly modified) response pass through
+            # Web grounding fallback
+            elif hasattr(chunk, 'web') and chunk.web:
+                web_chunk = chunk.web
+                places.append({
+                    "type": "web",
+                    "title": getattr(web_chunk, 'title', None),
+                    "uri": getattr(web_chunk, 'uri', None),
+                    "domain": getattr(web_chunk, 'domain', None),
+                })
+
+        # Extract grounding supports (which text is grounded by which chunk)
+        supports = getattr(gm, 'grounding_supports', []) or []
+        for support in supports:
+            segment = getattr(support, 'segment', None)
+            grounding_supports.append({
+                "text": getattr(segment, 'text', None) if segment else None,
+                "start_index": getattr(segment, 'start_index', None) if segment else None,
+                "end_index": getattr(segment, 'end_index', None) if segment else None,
+                "chunk_indices": getattr(support, 'grounding_chunk_indices', []),
+                "confidence_scores": getattr(support, 'confidence_scores', []),
+            })
+
+    # Store in session state if we have any grounding data
+    # This flows through state_delta in SSE events
+    if widget_token or places:
+        callback_context.state["maps_grounding"] = {
+            "widget_token": widget_token,
+            "places": places,
+            "place_ids": [p.get("place_id") for p in places if p.get("place_id")],
+            "grounding_supports": grounding_supports,
+            "retrieval_queries": retrieval_queries,
+        }
+
+    # Return None to let the response pass through unchanged
     return None
 
 
@@ -617,41 +611,48 @@ def render_trail_details(
 # Uses function tools to render trail cards
 trails_agent = Agent(
     name="TrailsAgent",
-    description=f"""Use this agent for ALL trail and hiking related queries:
+    description=f"""Use this agent for trail and hiking related queries:
     
-    ALWAYS USE TrailsAgent FOR:
-    - "What trails are nearby?"
-    - "Where can I go hiking?"
-    - "Find hiking trails"
-    - "Good hikes near the campground"
-    - "Nature walks nearby"
-    - "Tell me about [trail name]"
-    - "What's [trail name] like?"
-    - "Outdoor activities nearby"
+    USE TrailsAgent FOR:
+    - "What trails are nearby?" - initial discovery
+    - "Where can I go hiking?" - initial discovery
+    - "Tell me about [trail name]" - specific trail details
+    - "What's [trail name] like?" - specific trail details
     
     Location context: {CAMPGROUND_NAME} at {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
     """,
     model="gemini-2.5-flash",
-    instruction=f"""⚠️ MANDATORY: You MUST call render_trails_discovery or render_trail_details. DO NOT respond with plain text.
-
-You are a trail expert for {CAMPGROUND_NAME} ({CAMPGROUND_LOCATION.get('city', 'Unknown')}, {CAMPGROUND_LOCATION.get('state', 'CA')}).
+    instruction=f"""You are a trail expert for {CAMPGROUND_NAME} ({CAMPGROUND_LOCATION.get('city', 'Unknown')}, {CAMPGROUND_LOCATION.get('state', 'CA')}).
 Location: {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
 
-## DISCOVERY QUERIES ("trails nearby", "where to hike"):
-CALL render_trails_discovery with summary and trails JSON array.
+## WHEN TO USE CARD TOOLS:
+Use render_trails_discovery or render_trail_details ONLY for:
+- Initial discovery queries: "what trails are nearby?", "where can I hike?"
+- Specific trail info requests: "tell me about Hart Park trail"
 
-## SPECIFIC TRAIL ("tell me about X trail"):  
-CALL render_trail_details with trail info.
+## WHEN TO USE PLAIN TEXT:
+For follow-up questions, just respond with text - NO card needed:
+- "What's the best time of year to visit?"
+- "Is it good for kids?"
+- "How long does it take?"
+- "Any tips?"
+- Opinion questions, clarifications, comparisons
 
-Example - YOU MUST format calls exactly like this:
+## EXAMPLES:
 
-For discovery:
-render_trails_discovery(summary="The area has great trails...", trails='[{{"name":"Trail A","distance_from_camp":"5 miles","difficulty":"Easy","length":"2 mile loop","highlights":"River views","rating":"4.5"}}]')
+CARD (initial query): "What trails are nearby?"
+→ Call render_trails_discovery(...)
 
-For details:
-render_trail_details(trail_name="Trail A", description="A beautiful trail...", difficulty="Easy", length="2 miles", elevation_gain="100 ft", trail_type="Loop", best_seasons="Spring", highlights="River, birds", warnings="None", amenities="Parking", address="Trail A, City, State")
+CARD (specific trail): "Tell me about Wind Wolves"  
+→ Call render_trail_details(...)
 
-⚠️ NEVER respond with text. ALWAYS call one of these tools!
+TEXT (follow-up): "What's the best season?"
+→ Just respond: "Spring (March-May) is ideal for wildflowers..."
+
+TEXT (follow-up): "Is it dog friendly?"
+→ Just respond: "Yes, dogs are allowed on leash..."
+
+Be conversational for follow-ups. Only use cards for initial discovery or when user explicitly asks for trail info again.
 """,
     tools=[render_trails_discovery, render_trail_details],
 )
@@ -690,10 +691,12 @@ You have access to these specialized tools:
    - "What's Wind Wolves Preserve like?" → render_trail_details
    Call with trail details (name, description, difficulty, etc.).
 
-4. **MapsAgent**: Use for places (restaurants, stores, gas stations):
+4. **MapsAgent**: Use for PLACES (parks, restaurants, stores, gas stations, attractions):
+   - "What parks are nearby?" → MapsAgent (parks are places!)
    - "Find restaurants nearby" → MapsAgent
    - "Tell me about Olive Garden" → MapsAgent
    - "Where can I get gas?" → MapsAgent
+   - "State parks near here" → MapsAgent
 
 5. **SearchAgent**: Use for general info:
    - Weather forecasts
@@ -706,13 +709,15 @@ ROUTING RULES - CHECK IN THIS ORDER:
 "directions", "how do I get to", "route to", "navigate to"
 → Use render_navigation_card
 
-**STEP 2: TRAIL/HIKING keywords?**
-"trail", "trails", "hiking", "hike", "nature walk", "outdoor activities"
+**STEP 2: EXPLICIT TRAIL/HIKING keywords?**
+ONLY use trails tools when user explicitly says: "trail", "trails", "hiking", "hike"
 → Use render_trails_discovery for discovery OR render_trail_details for specific trail
+NOTE: "parks" is NOT a trail query - parks are PLACES!
 
 **STEP 3: PLACES keywords?**
-Restaurant, store, gas, coffee, food, shopping
+Parks, restaurants, stores, gas, coffee, food, shopping, attractions
 → Use MapsAgent
+IMPORTANT: "parks nearby", "state parks", "national parks" → MapsAgent (parks are places!)
 
 **STEP 4: CAMPGROUND keywords?**
 Amenities, rules, sites, hookups, pool, wifi
@@ -722,10 +727,10 @@ Amenities, rules, sites, hookups, pool, wifi
 Weather, events, regulations
 → Use SearchAgent
 
-CRITICAL: Trail queries use render_trails_discovery or render_trail_details, NOT MapsAgent!
-- "What trails are nearby?" → render_trails_discovery
-- "Where can I hike?" → render_trails_discovery
-- "Tell me about Hart Park" → render_trail_details
+CRITICAL DISTINCTION:
+- "What PARKS are nearby?" → MapsAgent (parks are places)
+- "What TRAILS are nearby?" → render_trails_discovery (trails are hiking paths)
+- "Does [park name] have trails?" → MapsAgent first, then can discuss trails
 
 RESPONSE FORMAT:
 [RESPONSE_TYPE: campground_info] for campground queries
