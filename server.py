@@ -62,9 +62,12 @@ class ChatResponse(BaseModel):
     citations: List[Dict] = []
     places: List[Dict] = []
     directions: Optional[Dict] = None
+    trails_discovery: Optional[Dict] = None  # Trail discovery with multiple trails
+    trail_details: Optional[Dict] = None  # Single trail details
     response_type: str = "text"
     agents_used: List[str] = []  # Track which agents were invoked
     maps_widget_token: Optional[str] = None  # Google Maps contextual widget token
+    maps_place_ids: List[str] = []  # Place IDs for fallback rendering
 
 
 def get_campground_info_direct(category: str) -> dict:
@@ -190,6 +193,14 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         agents_used = set()  # Track which agents were invoked
         tools_used = set()  # Track which tools were called
         maps_widget_token = None  # Extract from functionResponse
+        maps_place_ids = []  # Store place_ids for fallback rendering
+        maps_agent_result = None  # Store MapsAgent raw result for parsing
+        
+        # Initialize these before the loop - they may be set by virtual tools
+        navigation_directions = None
+        navigation_response_type = None
+        trails_discovery_data = None
+        trail_details_data = None
 
         for line in response.text.split("\n"):
             if line.startswith("data: "):
@@ -211,24 +222,88 @@ async def send_to_agent(user_id: str, message: str) -> dict:
                             if func_name:
                                 tools_used.add(func_name)
 
-                        # Extract widget token from functionResponse (MapsAgent output)
-                        # This is where the callback-injected token lives
+                        # Extract data from functionResponse
                         if "functionResponse" in part:
                             func_resp = part["functionResponse"]
+                            func_name = func_resp.get("name", "")
                             resp_data = func_resp.get("response", {})
                             result = resp_data.get("result", "")
-                            if "[MAPS_WIDGET_DATA:" in result and not maps_widget_token:
-                                # Extract the widget token directly from functionResponse
-                                widget_match = re.search(r'\[MAPS_WIDGET_DATA:(\{.*?"grounding_chunks":\s*\[\]\})', result, re.DOTALL)
+                            
+                            # Handle render_navigation_card tool call
+                            if func_name == "render_navigation_card" and result:
+                                try:
+                                    nav_data = json.loads(result)
+                                    if nav_data.get("type") == "navigation":
+                                        # This is a navigation request - pass to frontend
+                                        navigation_directions = {
+                                            "origin": nav_data.get("origin", "user_current_location"),
+                                            "destination": nav_data.get("destination", ""),
+                                            "travel_mode": nav_data.get("travel_mode", "DRIVING"),
+                                            "campground_location": nav_data.get("campground_location", {})
+                                        }
+                                        navigation_response_type = "navigation"
+                                        print(f"DEBUG: Navigation card detected: {navigation_directions['origin']} -> {navigation_directions['destination']}")
+                                except json.JSONDecodeError:
+                                    pass
+                            
+                            # Handle render_trails_discovery tool call
+                            if func_name == "render_trails_discovery" and result:
+                                try:
+                                    trails_data = json.loads(result)
+                                    if trails_data.get("type") == "trails_discovery":
+                                        trails_discovery_data = {
+                                            "summary": trails_data.get("summary", ""),
+                                            "trails": trails_data.get("trails", "[]"),
+                                            "campground_location": trails_data.get("campground_location", {})
+                                        }
+                                        # Parse trails JSON string if needed
+                                        if isinstance(trails_discovery_data["trails"], str):
+                                            try:
+                                                trails_discovery_data["trails"] = json.loads(trails_discovery_data["trails"])
+                                            except:
+                                                trails_discovery_data["trails"] = []
+                                        navigation_response_type = "trails_discovery"
+                                        print(f"DEBUG: Trails discovery detected: {len(trails_discovery_data.get('trails', []))} trails")
+                                except json.JSONDecodeError:
+                                    pass
+                            
+                            # Handle render_trail_details tool call
+                            if func_name == "render_trail_details" and result:
+                                try:
+                                    trail_data = json.loads(result)
+                                    if trail_data.get("type") == "trail_details":
+                                        trail_details_data = trail_data.get("trail", {})
+                                        trail_details_data["campground_location"] = trail_data.get("campground_location", {})
+                                        navigation_response_type = "trail_details"
+                                        print(f"DEBUG: Trail details detected: {trail_details_data.get('name', 'Unknown')}")
+                                except json.JSONDecodeError:
+                                    pass
+                            
+                            # Store MapsAgent result for later parsing
+                            if func_name == "MapsAgent" and result:
+                                maps_agent_result = result
+                            
+                            # Extract widget token and place_ids
+                            if "[MAPS_WIDGET_DATA:" in result:
+                                print(f"DEBUG: Found MAPS_WIDGET_DATA marker in result")
+                                # Match everything from { to the closing ] of the marker
+                                # Use greedy matching for nested JSON
+                                widget_match = re.search(r'\[MAPS_WIDGET_DATA:(\{.+\})\]', result, re.DOTALL)
                                 if widget_match:
                                     try:
                                         widget_json_str = widget_match.group(1)
+                                        print(f"DEBUG: Extracted widget JSON (first 200): {widget_json_str[:200]}")
                                         widget_json_str = widget_json_str.replace('\\"', '"').replace('\\n', '\n')
                                         widget_data = json.loads(widget_json_str)
                                         maps_widget_token = widget_data.get("widget_token")
-                                        print(f"DEBUG: Extracted widget token from functionResponse: {maps_widget_token[:50]}...")
+                                        # Also extract place_ids for fallback rendering
+                                        maps_place_ids = widget_data.get("place_ids", [])
+                                        print(f"DEBUG: Extracted token={maps_widget_token is not None}, place_ids={len(maps_place_ids)}")
                                     except json.JSONDecodeError as e:
-                                        print(f"DEBUG: Failed to parse widget JSON from functionResponse: {e}")
+                                        print(f"DEBUG: Failed to parse widget JSON: {e}")
+                                        print(f"DEBUG: Widget JSON was: {widget_json_str[:300]}")
+                                else:
+                                    print(f"DEBUG: Regex did not match widget data")
 
                         # Get text from final response
                         if "text" in part:
@@ -240,40 +315,97 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         # Combine agents and tools for display
         all_sources = list(agents_used | tools_used)
 
-        # Try to parse the response as JSON (from MapsAgent)
+        # Initialize response variables - use navigation/places data if detected
         places = []
-        directions = None
-        response_type = "text"  # Default fallback
-        # maps_widget_token already extracted from functionResponse above
+        directions = navigation_directions  # Use navigation data if set
+        response_type = navigation_response_type if navigation_response_type else "text"
+        
+        # If we have navigation directions, return early
+        if directions:
+            print(f"DEBUG: Using navigation directions: {directions}")
+            clean_response = re.sub(r'\s*\[RESPONSE_TYPE:\s*\w+\]\s*', '', full_response).strip()
+            return {
+                "response": clean_response,
+                "citations": [],
+                "places": [],
+                "directions": directions,
+                "trails_discovery": None,
+                "trail_details": None,
+                "response_type": response_type,
+                "agents_used": all_sources,
+                "maps_widget_token": maps_widget_token,
+                "maps_place_ids": maps_place_ids
+            }
+        
+        # If we have trails discovery data, return early
+        if trails_discovery_data:
+            print(f"DEBUG: Using trails discovery data")
+            clean_response = re.sub(r'\s*\[RESPONSE_TYPE:\s*\w+\]\s*', '', full_response).strip()
+            return {
+                "response": clean_response,
+                "citations": [],
+                "places": [],
+                "directions": None,
+                "trails_discovery": trails_discovery_data,
+                "trail_details": None,
+                "response_type": "trails_discovery",
+                "agents_used": all_sources,
+                "maps_widget_token": maps_widget_token,
+                "maps_place_ids": maps_place_ids
+            }
+        
+        # If we have trail details data, return early
+        if trail_details_data:
+            print(f"DEBUG: Using trail details data")
+            clean_response = re.sub(r'\s*\[RESPONSE_TYPE:\s*\w+\]\s*', '', full_response).strip()
+            return {
+                "response": clean_response,
+                "citations": [],
+                "places": [],
+                "directions": None,
+                "trails_discovery": None,
+                "trail_details": trail_details_data,
+                "response_type": "trail_details",
+                "agents_used": all_sources,
+                "maps_widget_token": maps_widget_token,
+                "maps_place_ids": maps_place_ids
+            }
 
+        # Use MapsAgent result if available (more reliable than root agent summary)
+        json_source = maps_agent_result if maps_agent_result else full_response
+        
+        # Clean json_source: remove widget marker and unescape
+        if json_source:
+            # Remove widget marker
+            if "[MAPS_WIDGET_DATA:" in json_source:
+                json_source = re.sub(r'\s*\[MAPS_WIDGET_DATA:\{.*?"grounding_chunks":\s*\[\]\}\s*', '', json_source, flags=re.DOTALL).strip()
+            # Clean up any "json\n" prefix from markdown formatting
+            if json_source.startswith('json\n'):
+                json_source = json_source[5:]
+
+        # Also clean up full_response for display purposes
         # First, check if response is an ADK AgentTool wrapper like {"MapsAgent_response": {"result": "..."}}
-        # Use regex to extract the result field to avoid JSON escape issues
         wrapper_match = re.search(r'"(\w+Agent)_response":\s*\{\s*"result":\s*"(.*)"', full_response, re.DOTALL)
         if wrapper_match:
             agent_name = wrapper_match.group(1)
             result_str = wrapper_match.group(2)
-            # Unescape the result string
             result_str = result_str.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
             full_response = result_str
-            # Clean up any "json\n" prefix from markdown formatting
             if full_response.startswith('json\n'):
                 full_response = full_response[5:]
-            # Remove widget marker from result
             if "[MAPS_WIDGET_DATA:" in full_response:
                 full_response = re.sub(r'\s*\[MAPS_WIDGET_DATA:\{.*?"grounding_chunks":\s*\[\]\}\s*', '', full_response, flags=re.DOTALL).strip()
-            print(f"DEBUG: Unwrapped {agent_name} response (first 200): {full_response[:200]}")
 
-        # Widget token already extracted from functionResponse in SSE parsing above
-        # Just clean up any marker that might be in the response text
+        # Clean up any remaining widget markers
         if "[MAPS_WIDGET_DATA:" in full_response:
             full_response = re.sub(r'\s*\[MAPS_WIDGET_DATA:\{.*?\}\]\s*', '', full_response, flags=re.DOTALL).strip()
 
         # Extract JSON from markdown code block if present (handles nested code blocks too)
-        json_to_parse = full_response
+        json_to_parse = json_source
 
         # Try to find the innermost JSON with "type" field
         # First look for ```json blocks
-        json_matches = re.findall(r'```json\s*([\s\S]*?)\s*```', full_response)
+        json_matches = re.findall(r'```json\s*([\s\S]*?)\s*```', json_source)
         for match in json_matches:
             # Try to find a valid places/directions JSON
             try:
@@ -285,14 +417,15 @@ async def send_to_agent(user_id: str, message: str) -> dict:
                 continue
 
         # If no markdown block, check for raw JSON with type field
-        if json_to_parse == full_response:
+        if json_to_parse == json_source:
             # Check if the response starts with { and contains "type"
-            if full_response.strip().startswith('{') and '"type"' in full_response:
-                json_to_parse = full_response.strip()
+            if json_source.strip().startswith('{') and '"type"' in json_source:
+                json_to_parse = json_source.strip()
 
         # Try to parse as JSON
         try:
             parsed_json = json.loads(json_to_parse)
+            print(f"DEBUG: Parsed JSON type: {parsed_json.get('type') if isinstance(parsed_json, dict) else 'not a dict'}")
             if isinstance(parsed_json, dict) and "type" in parsed_json:
                 response_type = parsed_json["type"]
                 if response_type == "places":
@@ -309,7 +442,9 @@ async def send_to_agent(user_id: str, message: str) -> dict:
                         "steps": parsed_json.get("steps", [])
                     }
                     full_response = parsed_json.get("summary", "")
-        except (json.JSONDecodeError, TypeError):
+                    print(f"DEBUG: Directions parsed - origin: {directions['origin']}, dest: {directions['destination']}")
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"DEBUG: JSON parse failed: {e}")
             # Not JSON, check for [RESPONSE_TYPE: ...] tag
             response_type_match = re.search(r'\[RESPONSE_TYPE:\s*(\w+)\]', full_response)
             if response_type_match:
@@ -322,9 +457,12 @@ async def send_to_agent(user_id: str, message: str) -> dict:
             "citations": [],
             "places": places,
             "directions": directions,
+            "trails_discovery": None,
+            "trail_details": None,
             "response_type": response_type,
             "agents_used": all_sources,
-            "maps_widget_token": maps_widget_token
+            "maps_widget_token": maps_widget_token,
+            "maps_place_ids": maps_place_ids
         }
 
 

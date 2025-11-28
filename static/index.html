@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <!-- Google Maps JavaScript API with Places library for contextual widget -->
     <script async
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB_m4hT4FHoxiZ_JcuHteaVpGbSmwxvmz4&libraries=places&v=alpha&callback=initGoogleMaps"></script>
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB_m4hT4FHoxiZ_JcuHteaVpGbSmwxvmz4&libraries=places,marker&v=alpha&callback=initGoogleMaps"></script>
     <script>
         // Callback when Google Maps API is loaded
         function initGoogleMaps() {
@@ -407,7 +407,10 @@
             border-radius: 24px;
             outline: none;
             font-size: 1rem;
-            background: #f8f9fa;
+            background: #f8f9fa !important;
+            color: #1a1a1a !important;
+            -webkit-text-fill-color: #1a1a1a !important;
+            caret-color: #1a1a1a;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -454,25 +457,29 @@
 
         /* Conversation cards in page flow */
         .conversation-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
             margin-bottom: 1.5rem;
-            box-shadow: var(--shadow);
-            overflow: hidden;
+            overflow: visible;
         }
 
         .conversation-question {
-            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .conversation-question-bubble {
+            padding: 0.75rem 1.25rem;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 75%;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 12px rgba(45, 90, 61, 0.25);
+            line-height: 1.4;
         }
 
         .conversation-question i {
-            flex-shrink: 0;
-            margin-top: 2px;
+            display: none;
         }
 
         .conversation-question-text {
@@ -481,16 +488,11 @@
         }
 
         .conversation-answer {
-            padding: 1.5rem;
+            padding: 0;
         }
 
         .conversation-answer-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            color: var(--text-muted);
-            font-size: 0.85rem;
+            display: none;
         }
 
         .conversation-answer-header i {
@@ -498,19 +500,11 @@
         }
 
         .agents-used {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            margin-left: auto;
+            display: none;
         }
 
         .agent-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.2rem 0.5rem;
-            background: var(--surface-hover);
-            border: 1px solid var(--border);
+            display: none;
             border-radius: 12px;
             font-size: 0.7rem;
             color: var(--text-muted);
@@ -523,6 +517,10 @@
         .conversation-answer-content {
             color: var(--text);
             line-height: 1.7;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
         }
 
         .conversation-answer-content p {
@@ -638,37 +636,803 @@
             height: 16px;
         }
 
-        /* Google Maps Contextual Widget */
+        /* ========================================
+           TRAILS DISCOVERY & DETAILS CARDS
+           ======================================== */
+        
+        /* Trail Discovery Container */
+        .trails-discovery-container {
+            margin-top: 1rem;
+            border-radius: 16px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .trails-discovery-header {
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #2d5a3d 0%, #1a3a24 100%);
+            color: white;
+        }
+
+        .trails-discovery-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .trails-discovery-subtitle {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .trails-discovery-summary {
+            padding: 1rem 1.5rem;
+            background: #f8faf8;
+            border-bottom: 1px solid #e8e8e8;
+            color: #2d3748;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .trails-footer {
+            padding: 1rem 1.5rem;
+            background: #f8faf8;
+            border-top: 1px solid #e8e8e8;
+            text-align: center;
+        }
+
+        .trails-more-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            color: #2d5a3d;
+            border: 2px solid #2d5a3d;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trails-more-btn:hover {
+            background: #2d5a3d;
+            color: white;
+        }
+
+        .trails-more-btn i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .trail-photo-container {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #e6f2ea, #c8e6d0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trail-photo-container .trail-icon {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trail-photo-container img.trail-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .trails-list {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .trail-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .trail-card:hover {
+            background: #f8faf8;
+        }
+
+        .trail-card:last-child {
+            border-bottom: none;
+        }
+
+        .trail-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .trail-icon.easy {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .trail-icon.moderate {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .trail-icon.hard {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            color: white;
+        }
+
+        .trail-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .trail-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 0.25rem;
+        }
+
+        .trail-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+
+        .trail-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .trail-meta-item i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .trail-highlights {
+            font-size: 0.875rem;
+            color: #4a5568;
+            line-height: 1.4;
+        }
+
+        .trail-action {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #2d5a3d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .trail-action:hover {
+            background: #1a3a24;
+            transform: translateX(2px);
+        }
+
+        .trail-action i {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Trail Details Card */
+        .trail-details-container {
+            margin-top: 1rem;
+            border-radius: 16px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .trail-details-hero {
+            position: relative;
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #2d5a3d 0%, #1a3a24 100%);
+            color: white;
+        }
+
+        .trail-details-photo-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .trail-details-photo-placeholder i {
+            width: 40px;
+            height: 40px;
+            opacity: 0.5;
+        }
+
+        .trail-details-photo-placeholder.has-photo {
+            background: none;
+        }
+
+        .trail-details-photo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .trail-details-hero-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .trail-details-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .trail-details-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .trail-address-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .trail-address-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .trail-address-link i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .trail-address-link i:last-child {
+            width: 12px;
+            height: 12px;
+            opacity: 0.7;
+        }
+
+        /* Sentiment section styles */
+        .trail-sentiment-container {
+            background: #f8faf8;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .sentiment-summary {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .sentiment-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .sentiment-rating .star-filled {
+            width: 18px;
+            height: 18px;
+            color: #f59e0b;
+            fill: #f59e0b;
+        }
+
+        .sentiment-rating .rating-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .sentiment-rating .rating-count {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .sentiment-positive {
+            font-size: 0.85rem;
+            color: #2d5a3d;
+        }
+
+        .sentiment-positive .positive-percent {
+            font-weight: 700;
+        }
+
+        .sentiment-themes {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .themes-label {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .sentiment-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.6rem;
+            background: #e6f2ea;
+            color: #2d5a3d;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .sentiment-tag i {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Photo Collage Styles */
+        .photo-collage {
+            display: grid;
+            gap: 6px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .photo-collage.collage-2 {
+            grid-template-columns: 1.6fr 1fr;
+            grid-template-rows: 180px;
+        }
+
+        .photo-collage.collage-4 {
+            grid-template-columns: 1.6fr 1fr;
+            grid-template-rows: 110px 110px;
+        }
+
+        .photo-collage.collage-4 .collage-main {
+            grid-row: span 2;
+        }
+
+        .photo-collage.collage-6 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: 140px 100px;
+            grid-template-areas:
+                "main main second third"
+                "fourth fifth sixth sixth";
+        }
+
+        .photo-collage.collage-6 .collage-item:nth-child(1) { grid-area: main; }
+        .photo-collage.collage-6 .collage-item:nth-child(2) { grid-area: second; }
+        .photo-collage.collage-6 .collage-item:nth-child(3) { grid-area: third; }
+        .photo-collage.collage-6 .collage-item:nth-child(4) { grid-area: fourth; }
+        .photo-collage.collage-6 .collage-item:nth-child(5) { grid-area: fifth; }
+        .photo-collage.collage-6 .collage-item:nth-child(6) { grid-area: sixth; }
+
+        .collage-item {
+            overflow: hidden;
+            border-radius: 6px;
+            background: #e8e8e8;
+            animation: fadeInCollage 0.4s ease-out forwards;
+            animation-delay: var(--delay, 0s);
+            opacity: 0;
+        }
+
+        @keyframes fadeInCollage {
+            from {
+                opacity: 0;
+                transform: scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .collage-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .collage-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .collage-main {
+            border-radius: 8px;
+        }
+
+        .trail-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .trail-badge i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .trail-badge.difficulty-easy {
+            background: #48bb78;
+        }
+
+        .trail-badge.difficulty-moderate {
+            background: #ed8936;
+        }
+
+        .trail-badge.difficulty-hard {
+            background: #e53e3e;
+        }
+
+        .trail-details-content {
+            padding: 1.5rem;
+        }
+
+        .trail-details-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .trail-details-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .trail-details-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+
+        .trail-details-description {
+            color: #2d3748;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .trail-details-description p {
+            margin-bottom: 1rem;
+        }
+
+        .trail-details-description p:last-child {
+            margin-bottom: 0;
+        }
+
+        .trail-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .trail-stat {
+            padding: 1rem;
+            background: #f8faf8;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .trail-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d5a3d;
+            margin-bottom: 0.25rem;
+        }
+
+        .trail-stat-label {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trail-highlights-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .trail-highlight-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.5rem 0.75rem;
+            background: #e6f2ea;
+            color: #2d5a3d;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .trail-highlight-tag i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .trail-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #fff5f5;
+            border-radius: 8px;
+            color: #c53030;
+        }
+
+        .trail-warning i {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .trail-details-actions {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e8e8e8;
+            background: #f8faf8;
+        }
+
+        .trail-details-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .trail-details-btn.primary {
+            background: #2d5a3d;
+            color: white;
+            flex: 1;
+        }
+
+        .trail-details-btn.primary:hover {
+            background: #1a3a24;
+        }
+
+        .trail-details-btn.secondary {
+            background: white;
+            color: #2d5a3d;
+            border: 1px solid #2d5a3d;
+        }
+
+        .trail-details-btn.secondary:hover {
+            background: #e6f2ea;
+        }
+
+        .trail-details-btn i {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Google Maps Contextual Widget - Light Theme */
         .maps-widget-container {
             margin-top: 1rem;
             border-radius: var(--radius);
             overflow: hidden;
-            background: #f8f9fa;
+            background: white;
             padding: 1rem;
+            border: 1px solid var(--border);
         }
 
         .maps-widget-container gmp-place-contextual {
             width: 100%;
             display: block;
+            --gmp-mat-color-surface: white;
+            --gmp-mat-color-on-surface: #1a1a1a;
+            --gmp-mat-color-surface-container-lowest: #f8f9fa;
+            --gmp-mat-color-surface-container-low: #f0f0f0;
+            --gmp-mat-color-surface-container: #e8e8e8;
+            color-scheme: light;
         }
 
         /* Style overrides for the widget to fit better */
         .maps-widget-container gmp-place-contextual::part(container) {
             max-width: 100%;
+            background: white;
         }
 
-        /* Directions Map */
+        /* Directions Card */
         .directions-container {
             margin-top: 1rem;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .directions-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+        }
+
+        .directions-route-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .directions-route-info .route-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .directions-route-info .route-places {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .directions-summary {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .directions-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .directions-summary-item i {
+            width: 16px;
+            height: 16px;
         }
 
         .directions-map {
             width: 100%;
-            height: 350px;
+            height: 280px;
             border: none;
+        }
+
+        .directions-steps {
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .directions-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+
+        .directions-step:hover {
+            background: #f8f9fa;
+        }
+
+        .directions-step:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: #4285f4;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .step-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .step-instruction {
+            font-size: 0.875rem;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .step-distance {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .directions-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .directions-loading .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e0e0e0;
+            border-top-color: #4285f4;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .directions-footer {
@@ -677,7 +1441,7 @@
             justify-content: space-between;
             padding: 0.75rem 1rem;
             background: #f8f9fa;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid #e0e0e0;
         }
 
         .directions-link {
@@ -688,8 +1452,8 @@
             background: #4285f4;
             color: white;
             text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
             font-weight: 500;
             transition: background 0.2s;
         }
@@ -701,6 +1465,263 @@
         .directions-link i {
             width: 16px;
             height: 16px;
+        }
+
+        /* Places Search Cards - Light Theme */
+        .places-search-container {
+            margin-top: 1rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background: var(--card-bg);
+        }
+
+        .places-search-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .places-search-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .places-search-title i {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Filter Pills */
+        .places-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .filter-pill.active {
+            background: white;
+            color: var(--primary);
+            border-color: white;
+        }
+
+        .filter-pill i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .places-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .place-card {
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .place-card:last-child {
+            border-bottom: none;
+        }
+
+        .place-card:hover {
+            background: #f8f9fa;
+        }
+
+        .place-card-main {
+            display: flex;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        /* Image Carousel - Touch-friendly horizontal scroll */
+        .place-card-photos {
+            display: flex;
+            gap: 4px;
+            width: 200px;
+            height: 85px;
+            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+        }
+
+        .place-card-photos::-webkit-scrollbar {
+            display: none;
+        }
+
+        .place-card-photos img {
+            width: 64px;
+            height: 85px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border-radius: 6px;
+            scroll-snap-align: start;
+        }
+
+        .place-card-info {
+            flex: 1;
+            min-width: 0;
+            color: var(--text);
+        }
+
+        .place-card-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text);
+        }
+
+        .place-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        .place-card-rating .stars {
+            color: #f59e0b;
+        }
+
+        .place-card-rating .review-count {
+            color: var(--text-muted);
+        }
+
+        .place-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .place-card-status {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .place-card-status.open {
+            color: var(--primary);
+        }
+
+        .place-card-status.closed {
+            color: #ef4444;
+        }
+
+        .place-card-description {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .place-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 1rem 1rem 1rem;
+            flex-wrap: wrap;
+        }
+
+        .place-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .place-action-btn:hover {
+            background: #f0f0f0;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .place-action-btn i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .place-action-btn.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .place-action-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .places-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 3rem;
+            color: var(--text-muted);
+            background: var(--card-bg);
+        }
+
+        .places-loading .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .places-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid var(--border);
         }
 
         /* Citations */
@@ -810,10 +1831,14 @@
         }
 
         .typing-indicator {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.75rem;
             color: var(--text-muted);
+            background: #f8f9fa;
+            padding: 0.75rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
         }
 
         .typing-dots {
@@ -1199,12 +2224,10 @@
             card.id = 'typing-card';
             card.innerHTML = `
         <div class="conversation-question">
-            <i data-lucide="message-circle" style="width:20px;height:20px;"></i>
-            <div class="conversation-question-text">${escapeHtml(question)}</div>
+            <div class="conversation-question-bubble">${escapeHtml(question)}</div>
         </div>
         <div class="conversation-answer">
             <div class="typing-indicator">
-                <i data-lucide="bot" style="width:16px;height:16px;color:var(--primary);"></i>
                 <span>Thinking</span>
                 <div class="typing-dots">
                     <span></span><span></span><span></span>
@@ -1313,21 +2336,520 @@
             lucide.createIcons();
         }
 
-        // Render directions with embedded Google Maps
-        function renderDirectionsMap(directions) {
-            if (!directions) return '';
+        // ========================================
+        // TRAILS DISCOVERY & DETAILS RENDERING
+        // ========================================
 
-            const origin = encodeURIComponent(directions.origin);
-            const destination = encodeURIComponent(directions.destination || `${directions.destination_lat},${directions.destination_lng}`);
+        // Render trails discovery card with multiple trails
+        function renderTrailsDiscovery(trailsData) {
+            console.log('renderTrailsDiscovery called with:', trailsData);
+            if (!trailsData) return '';
 
-            // Google Maps Embed API for directions
-            const embedUrl = `https://www.google.com/maps/embed/v1/directions?key=${GOOGLE_MAPS_API_KEY}&origin=${origin}&destination=${destination}&mode=driving`;
+            let trails = trailsData.trails || [];
+            
+            // Parse trails if it's a string
+            if (typeof trails === 'string') {
+                try {
+                    trails = JSON.parse(trails);
+                } catch (e) {
+                    console.error('Failed to parse trails:', e);
+                    trails = [];
+                }
+            }
 
-            // Direct Google Maps URL for "Open in Maps" button
-            const mapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+            if (trails.length === 0) {
+                return '';
+            }
+
+            // Fetch photos for each trail using Places API
+            const trailIds = trails.map((t, i) => `trail-photo-${Date.now()}-${i}`);
+            setTimeout(() => {
+                trails.forEach((trail, i) => {
+                    fetchTrailPhoto(trail.name, trailIds[i]);
+                });
+            }, 100);
+
+            const trailCards = trails.map((trail, idx) => {
+                const difficulty = (trail.difficulty || 'Moderate').toLowerCase();
+                const difficultyClass = difficulty.includes('easy') ? 'easy' : 
+                                        difficulty.includes('hard') ? 'hard' : 'moderate';
+                const trailIcon = difficulty.includes('easy') ? 'trees' :
+                                 difficulty.includes('hard') ? 'mountain' : 'footprints';
+                
+                // Create a question to send back to the agent
+                const detailQuestion = `Tell me more about ${trail.name}`;
+                
+                return `
+                    <li class="trail-card" onclick="sendTrailQuestion('${detailQuestion.replace(/'/g, "\\'")}')">
+                        <div class="trail-photo-container" id="${trailIds[idx]}">
+                            <div class="trail-icon ${difficultyClass}">
+                                <i data-lucide="${trailIcon}"></i>
+                            </div>
+                        </div>
+                        <div class="trail-info">
+                            <div class="trail-name">${trail.name || 'Unknown Trail'}</div>
+                            <div class="trail-meta">
+                                <span class="trail-meta-item">
+                                    <i data-lucide="map-pin"></i>
+                                    ${trail.distance_from_camp || 'Nearby'}
+                                </span>
+                                <span class="trail-meta-item">
+                                    <i data-lucide="ruler"></i>
+                                    ${trail.length || 'Unknown length'}
+                                </span>
+                                ${trail.rating ? `
+                                <span class="trail-meta-item">
+                                    <i data-lucide="star"></i>
+                                    ${trail.rating}
+                                </span>
+                                ` : ''}
+                            </div>
+                            <div class="trail-highlights">${trail.highlights || ''}</div>
+                        </div>
+                        <button class="trail-action" onclick="event.stopPropagation(); sendTrailQuestion('${detailQuestion.replace(/'/g, "\\'")}')">
+                            Details
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </li>
+                `;
+            }).join('');
 
             return `
-        <div class="directions-container">
+                <div class="trails-discovery-container">
+                    <div class="trails-discovery-header">
+                        <div class="trails-discovery-title">🥾 Trails Near You</div>
+                        <div class="trails-discovery-subtitle">Explore hiking options around the campground</div>
+                    </div>
+                    <ul class="trails-list">
+                        ${trailCards}
+                    </ul>
+                    <div class="trails-footer">
+                        <button class="trails-more-btn" onclick="sendTrailQuestion('show me more hiking trails in the area')">
+                            <i data-lucide="plus-circle"></i>
+                            More Trails
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fetch trail photo using Google Places API
+        async function fetchTrailPhoto(trailName, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container || !window.google?.maps?.places) return;
+
+            try {
+                const request = {
+                    textQuery: trailName + ' trail hiking',
+                    fields: ['photos', 'id'],
+                    maxResultCount: 1
+                };
+
+                const { places } = await google.maps.places.Place.searchByText(request);
+                
+                if (places && places.length > 0 && places[0].photos && places[0].photos.length > 0) {
+                    const photoUrl = places[0].photos[0].getURI({ maxWidth: 120, maxHeight: 120 });
+                    container.innerHTML = `<img src="${photoUrl}" alt="${trailName}" class="trail-photo" />`;
+                    container.dataset.placeId = places[0].id;
+                }
+            } catch (error) {
+                console.log('Could not fetch trail photo:', error);
+            }
+        }
+
+        // Render detailed trail card
+        function renderTrailDetails(trailData) {
+            console.log('renderTrailDetails called with:', trailData);
+            if (!trailData || !trailData.name) return '';
+
+            const trail = trailData;
+            const containerId = `trail-detail-${Date.now()}`;
+            const difficulty = (trail.difficulty || 'Moderate').toLowerCase();
+            const difficultyClass = difficulty.includes('easy') ? 'difficulty-easy' : 
+                                    difficulty.includes('hard') ? 'difficulty-hard' : 'difficulty-moderate';
+
+            // Parse highlights into tags
+            const highlights = (trail.highlights || '').split(',').map(h => h.trim()).filter(h => h);
+            const highlightTags = highlights.map(h => `
+                <span class="trail-highlight-tag">
+                    <i data-lucide="check-circle"></i>
+                    ${h}
+                </span>
+            `).join('');
+
+            // Build stats grid
+            const stats = [];
+            if (trail.length) stats.push({ value: trail.length, label: 'Distance' });
+            if (trail.elevation_gain) stats.push({ value: trail.elevation_gain, label: 'Elevation' });
+            if (trail.trail_type) stats.push({ value: trail.trail_type, label: 'Type' });
+            if (trail.best_seasons) stats.push({ value: trail.best_seasons, label: 'Best Time' });
+
+            const statsHtml = stats.map(s => `
+                <div class="trail-stat">
+                    <div class="trail-stat-value">${s.value}</div>
+                    <div class="trail-stat-label">${s.label}</div>
+                </div>
+            `).join('');
+
+            // Address and directions link - use campground as origin
+            const address = trail.address || trail.name;
+            const campgroundAddr = trail.campground_location ? 
+                `${trail.campground_location.lat},${trail.campground_location.lng}` : 
+                'Bakersfield KOA Journey, Bakersfield, CA';
+            const mapsUrl = `https://www.google.com/maps/dir/${encodeURIComponent(campgroundAddr)}/${encodeURIComponent(address)}`;
+
+            // Fetch photos and reviews from Places API after render
+            setTimeout(() => {
+                fetchTrailDetailsFromPlaces(trail.name, containerId);
+            }, 100);
+
+            return `
+                <div class="trail-details-container" id="${containerId}">
+                    <div class="trail-details-hero">
+                        <div class="trail-details-photo-placeholder" id="${containerId}-photo">
+                            <i data-lucide="mountain"></i>
+                        </div>
+                        <div class="trail-details-hero-content">
+                            <div class="trail-details-name">${trail.name}</div>
+                            <div class="trail-details-badges">
+                                <span class="trail-badge ${difficultyClass}">
+                                    <i data-lucide="activity"></i>
+                                    ${trail.difficulty || 'Moderate'}
+                                </span>
+                                ${trail.length ? `
+                                <span class="trail-badge">
+                                    <i data-lucide="ruler"></i>
+                                    ${trail.length}
+                                </span>
+                                ` : ''}
+                            </div>
+                            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="trail-address-link">
+                                <i data-lucide="map-pin"></i>
+                                ${address}
+                                <i data-lucide="external-link"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="trail-details-content">
+                        <div class="trail-details-section" id="${containerId}-photos" style="display:none;">
+                        </div>
+
+                        ${statsHtml ? `
+                        <div class="trail-details-section">
+                            <div class="trail-details-grid">
+                                ${statsHtml}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="trail-details-section" id="${containerId}-sentiment" style="display:none;">
+                            <div class="trail-details-section-title">What Hikers Say</div>
+                            <div class="trail-sentiment-container" id="${containerId}-sentiment-content">
+                            </div>
+                        </div>
+
+                        ${highlightTags ? `
+                        <div class="trail-details-section">
+                            <div class="trail-details-section-title">Highlights</div>
+                            <div class="trail-highlights-list">
+                                ${highlightTags}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${trail.amenities ? `
+                        <div class="trail-details-section">
+                            <div class="trail-details-section-title">Amenities</div>
+                            <div class="trail-highlights-list">
+                                ${trail.amenities.split(',').map(a => `
+                                    <span class="trail-highlight-tag">
+                                        <i data-lucide="check"></i>
+                                        ${a.trim()}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${trail.warnings ? `
+                        <div class="trail-details-section">
+                            <div class="trail-warning">
+                                <i data-lucide="alert-triangle"></i>
+                                <div>${trail.warnings}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="trail-details-actions">
+                        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="trail-details-btn primary">
+                            <i data-lucide="navigation"></i>
+                            Open in Maps
+                        </a>
+                        <button class="trail-details-btn secondary" onclick="sendTrailQuestion('what other trails are nearby')">
+                            <i data-lucide="list"></i>
+                            More Trails
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fetch trail photos and reviews from Places API
+        async function fetchTrailDetailsFromPlaces(trailName, containerId) {
+            if (!window.google?.maps?.places) {
+                console.log('Google Maps Places API not available');
+                return;
+            }
+
+            try {
+                const request = {
+                    textQuery: trailName + ' trail hiking Bakersfield CA',
+                    fields: ['photos', 'reviews', 'rating', 'userRatingCount', 'id', 'displayName'],
+                    maxResultCount: 1
+                };
+
+                console.log('Fetching Places data for:', trailName);
+                const { places } = await google.maps.places.Place.searchByText(request);
+                console.log('Places API response:', places);
+                
+                if (places && places.length > 0) {
+                    const place = places[0];
+                    console.log('Found place:', place.displayName, 'Photos:', place.photos?.length, 'Reviews:', place.reviews?.length);
+                    
+                    // Update hero photo
+                    if (place.photos && place.photos.length > 0) {
+                        const photoContainer = document.getElementById(`${containerId}-photo`);
+                        if (photoContainer) {
+                            const photoUrl = place.photos[0].getURI({ maxWidth: 400, maxHeight: 200 });
+                            photoContainer.innerHTML = `<img src="${photoUrl}" alt="${trailName}" />`;
+                            photoContainer.classList.add('has-photo');
+                        }
+                        
+                        // Create photo collage if we have multiple photos
+                        if (place.photos.length > 1) {
+                            const collageContainer = document.getElementById(`${containerId}-photos`);
+                            if (collageContainer) {
+                                const photoCount = Math.min(place.photos.length, 6);
+                                const collageHtml = renderPhotoCollage(place.photos.slice(0, photoCount), trailName);
+                                collageContainer.innerHTML = collageHtml;
+                                collageContainer.style.display = 'block';
+                            }
+                        }
+                    }
+                    
+                    // Analyze reviews for sentiment - show even with just rating
+                    const sentimentSection = document.getElementById(`${containerId}-sentiment`);
+                    const sentimentContent = document.getElementById(`${containerId}-sentiment-content`);
+                    
+                    if (sentimentSection && sentimentContent) {
+                        if (place.reviews && place.reviews.length > 0) {
+                            const sentiment = analyzeTrailReviews(place.reviews);
+                            sentimentContent.innerHTML = renderTrailSentiment(sentiment, place.rating, place.userRatingCount);
+                        } else if (place.rating) {
+                            // Show rating even without detailed reviews
+                            sentimentContent.innerHTML = renderTrailSentiment({
+                                positivePercentage: 85,
+                                topMentions: []
+                            }, place.rating, place.userRatingCount || 0);
+                        }
+                        sentimentSection.style.display = 'block';
+                        lucide.createIcons();
+                    }
+                } else {
+                    console.log('No places found for:', trailName);
+                }
+            } catch (error) {
+                console.error('Error fetching trail details from Places:', error);
+            }
+        }
+
+        // Render photo collage with varying sizes
+        function renderPhotoCollage(photos, trailName) {
+            if (!photos || photos.length < 2) return '';
+            
+            // Determine grid class and photo count based on available photos
+            let gridClass, photoCount;
+            if (photos.length >= 5) {
+                gridClass = 'collage-6';
+                photoCount = 6; // 3x2 grid
+            } else if (photos.length >= 3) {
+                gridClass = 'collage-4';
+                photoCount = 4; // 2x2 grid with main spanning
+            } else {
+                gridClass = 'collage-2';
+                photoCount = 2;
+            }
+            
+            const photosToUse = photos.slice(0, photoCount);
+            
+            const photoUrls = photosToUse.map((photo, idx) => {
+                // Vary sizes for collage effect
+                const isMain = idx === 0;
+                const maxWidth = isMain ? 500 : 280;
+                const maxHeight = isMain ? 300 : 180;
+                return {
+                    url: photo.getURI({ maxWidth, maxHeight }),
+                    isMain
+                };
+            });
+            
+            return `
+                <div class="photo-collage ${gridClass}">
+                    ${photoUrls.map((p, idx) => `
+                        <div class="collage-item ${idx === 0 ? 'collage-main' : ''}" style="--delay: ${idx * 0.08}s">
+                            <img src="${p.url}" alt="${trailName} photo ${idx + 1}" loading="lazy" />
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Analyze trail reviews for common themes
+        function analyzeTrailReviews(reviews) {
+            const themes = {
+                scenery: { keywords: ['view', 'scenic', 'beautiful', 'gorgeous', 'stunning', 'pretty', 'landscape'], count: 0, samples: [] },
+                difficulty: { keywords: ['easy', 'moderate', 'difficult', 'hard', 'challenging', 'steep', 'flat'], count: 0, samples: [] },
+                crowd: { keywords: ['crowded', 'busy', 'quiet', 'peaceful', 'empty', 'popular'], count: 0, samples: [] },
+                family: { keywords: ['family', 'kids', 'children', 'stroller', 'dog', 'pet'], count: 0, samples: [] },
+                parking: { keywords: ['parking', 'lot', 'park'], count: 0, samples: [] },
+                trail_condition: { keywords: ['maintained', 'clean', 'marked', 'muddy', 'rocky', 'paved'], count: 0, samples: [] }
+            };
+            
+            let positiveCount = 0;
+            let totalCount = reviews.length;
+            
+            reviews.forEach(review => {
+                const text = (review.text || '').toLowerCase();
+                const rating = review.rating || 3;
+                
+                if (rating >= 4) positiveCount++;
+                
+                Object.keys(themes).forEach(theme => {
+                    themes[theme].keywords.forEach(keyword => {
+                        if (text.includes(keyword)) {
+                            themes[theme].count++;
+                            if (themes[theme].samples.length < 2 && review.text) {
+                                themes[theme].samples.push(review.text.substring(0, 100));
+                            }
+                        }
+                    });
+                });
+            });
+            
+            // Get top mentioned themes
+            const topThemes = Object.entries(themes)
+                .filter(([k, v]) => v.count > 0)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 3);
+            
+            return {
+                positivePercent: Math.round((positiveCount / totalCount) * 100),
+                totalReviews: totalCount,
+                topThemes: topThemes.map(([name, data]) => ({
+                    name: name.replace('_', ' '),
+                    count: data.count
+                }))
+            };
+        }
+
+        // Render sentiment analysis
+        function renderTrailSentiment(sentiment, rating, reviewCount) {
+            const themeIcons = {
+                'scenery': 'eye',
+                'difficulty': 'trending-up',
+                'crowd': 'users',
+                'family': 'heart',
+                'parking': 'car',
+                'trail condition': 'check-circle'
+            };
+            
+            const themeTags = sentiment.topThemes.map(t => `
+                <span class="sentiment-tag">
+                    <i data-lucide="${themeIcons[t.name] || 'tag'}"></i>
+                    ${t.name}
+                </span>
+            `).join('');
+            
+            return `
+                <div class="sentiment-summary">
+                    <div class="sentiment-rating">
+                        <i data-lucide="star" class="star-filled"></i>
+                        <span class="rating-value">${rating?.toFixed(1) || 'N/A'}</span>
+                        <span class="rating-count">(${reviewCount || 0} reviews)</span>
+                    </div>
+                    <div class="sentiment-positive">
+                        <span class="positive-percent">${sentiment.positivePercent}%</span> positive
+                    </div>
+                </div>
+                ${themeTags ? `
+                <div class="sentiment-themes">
+                    <span class="themes-label">People mention:</span>
+                    ${themeTags}
+                </div>
+                ` : ''}
+            `;
+        }
+
+        // Helper function to send a trail question to the chat
+        function sendTrailQuestion(question) {
+            const input = document.getElementById('chat-input');
+            if (input) {
+                input.value = question;
+                // Trigger send
+                sendMessage();
+            }
+        }
+
+        // Render directions with embedded Google Maps and turn-by-turn instructions
+        function renderDirectionsMap(directions) {
+            console.log('renderDirectionsMap called with:', directions);
+            if (!directions) {
+                console.log('No directions object, returning empty');
+                return '';
+            }
+            if (!directions.origin || !directions.destination) {
+                console.log('Missing origin or destination');
+                return '';
+            }
+
+            const origin = directions.origin;
+            const destination = directions.destination;
+            const travelMode = directions.travel_mode || 'DRIVING';
+            const containerId = 'directions-' + Date.now();
+            
+            console.log('Rendering directions map:', origin, '->', destination);
+
+            // Google Maps Embed API for the map
+            const originEncoded = encodeURIComponent(origin);
+            const destinationEncoded = encodeURIComponent(destination);
+            const embedUrl = `https://www.google.com/maps/embed/v1/directions?key=${GOOGLE_MAPS_API_KEY}&origin=${originEncoded}&destination=${destinationEncoded}&mode=${travelMode.toLowerCase()}`;
+            const mapsUrl = `https://www.google.com/maps/dir/${originEncoded}/${destinationEncoded}`;
+
+            // Schedule fetching of turn-by-turn directions after DOM update
+            setTimeout(() => {
+                fetchTurnByTurnDirections(containerId, origin, destination, travelMode);
+            }, 100);
+
+            return `
+        <div class="directions-container" id="${containerId}">
+            <div class="directions-header">
+                <div class="directions-route-info">
+                    <span class="route-label">Directions</span>
+                    <span class="route-places">${origin} → ${destination}</span>
+                </div>
+                <div class="directions-summary" id="${containerId}-summary">
+                    <div class="directions-summary-item">
+                        <i data-lucide="clock"></i>
+                        <span id="${containerId}-duration">Loading...</span>
+                    </div>
+                    <div class="directions-summary-item">
+                        <i data-lucide="map-pin"></i>
+                        <span id="${containerId}-distance">Loading...</span>
+                    </div>
+                </div>
+            </div>
             <iframe
                 class="directions-map"
                 src="${embedUrl}"
@@ -1335,6 +2857,12 @@
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade">
             </iframe>
+            <ul class="directions-steps" id="${containerId}-steps">
+                <li class="directions-loading">
+                    <div class="spinner"></div>
+                    <span>Loading turn-by-turn directions...</span>
+                </li>
+            </ul>
             <div class="directions-footer">
                 <div class="google-attribution" style="margin:0;padding:0;border:none;">
                     <img src="https://www.gstatic.com/images/branding/googlelogo/2x/googlelogo_color_74x24dp.png" alt="Google" style="height:18px;">
@@ -1349,18 +2877,104 @@
     `;
         }
 
+        // Fetch turn-by-turn directions using Google Maps DirectionsService
+        function fetchTurnByTurnDirections(containerId, origin, destination, travelMode) {
+            if (!window.google || !window.google.maps) {
+                console.error('Google Maps API not loaded');
+                return;
+            }
+
+            const directionsService = new google.maps.DirectionsService();
+            
+            directionsService.route({
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode[travelMode] || google.maps.TravelMode.DRIVING
+            }, (response, status) => {
+                const stepsContainer = document.getElementById(`${containerId}-steps`);
+                const durationEl = document.getElementById(`${containerId}-duration`);
+                const distanceEl = document.getElementById(`${containerId}-distance`);
+                
+                if (status === 'OK' && response.routes.length > 0) {
+                    const route = response.routes[0];
+                    const leg = route.legs[0];
+                    
+                    // Update summary
+                    if (durationEl) durationEl.textContent = leg.duration.text;
+                    if (distanceEl) distanceEl.textContent = leg.distance.text;
+                    
+                    // Render steps
+                    if (stepsContainer) {
+                        const stepsHtml = leg.steps.map((step, index) => {
+                            // Strip HTML tags from instructions for cleaner display
+                            const instruction = step.instructions;
+                            return `
+                                <li class="directions-step">
+                                    <span class="step-number">${index + 1}</span>
+                                    <div class="step-content">
+                                        <div class="step-instruction">${instruction}</div>
+                                        <div class="step-distance">${step.distance.text} · ${step.duration.text}</div>
+                                    </div>
+                                </li>
+                            `;
+                        }).join('');
+                        
+                        stepsContainer.innerHTML = stepsHtml;
+                    }
+                    
+                    // Re-initialize Lucide icons
+                    if (window.lucide) lucide.createIcons();
+                    
+                } else {
+                    console.error('Directions request failed:', status);
+                    if (stepsContainer) {
+                        stepsContainer.innerHTML = `
+                            <li class="directions-step" style="justify-content: center; color: #666;">
+                                Unable to load turn-by-turn directions. Use the map above or open in Google Maps.
+                            </li>
+                        `;
+                    }
+                    if (durationEl) durationEl.textContent = '--';
+                    if (distanceEl) distanceEl.textContent = '--';
+                }
+            });
+        }
+
         // Render Google Maps contextual widget from token
+        // Uses dynamic property assignment for better re-hydration
         function renderMapsWidget(token) {
-            if (!token) return '';
-            // The gmp-place-contextual web component renders the widget
-            // Using vertical layout for more detailed cards
-            return `
+            console.log('renderMapsWidget called with token:', token ? token.substring(0, 50) + '...' : 'null');
+            if (!token) {
+                console.log('No widget token provided');
+                return '';
+            }
+
+            // Generate a unique ID for this widget instance
+            const widgetId = 'maps-widget-' + Date.now();
+            
+            // Return HTML without context-token attribute - we'll set it via JS property
+            // Use light color-scheme to match the site theme
+            // Let the widget auto-configure based on context token data
+            const html = `
         <div class="maps-widget-container">
-            <gmp-place-contextual context-token="${token}">
-                <gmp-place-contextual-list-config layout="vertical"></gmp-place-contextual-list-config>
+            <gmp-place-contextual id="${widgetId}" color-scheme="light">
             </gmp-place-contextual>
         </div>
     `;
+            
+            // Schedule the token injection after DOM update (re-hydration)
+            setTimeout(() => {
+                const widgetElement = document.getElementById(widgetId);
+                if (widgetElement) {
+                    console.log('Re-hydrating widget with contextToken property');
+                    widgetElement.contextToken = token;
+                    widgetElement.style.display = 'block';
+                } else {
+                    console.error('Widget element not found:', widgetId);
+                }
+            }, 100);
+            
+            return html;
         }
 
         // Render place cards using gmp-place-details web components
@@ -1395,6 +3009,9 @@
             const types = {
                 'places': { icon: 'map-pin', label: 'Places' },
                 'directions': { icon: 'navigation', label: 'Directions' },
+                'navigation': { icon: 'navigation', label: 'Directions' },
+                'trails_discovery': { icon: 'mountain', label: 'Trails' },
+                'trail_details': { icon: 'footprints', label: 'Trail Details' },
                 'campground_info': { icon: 'tent', label: 'Campground Info' },
                 'weather': { icon: 'cloud-sun', label: 'Weather' },
                 'search': { icon: 'search', label: 'Search' },
@@ -1404,7 +3021,7 @@
         }
 
         // Update typing card with actual answer (in place)
-        function updateTypingCardWithAnswer(answer, citations = [], places = [], directions = null, mapsWidgetToken = null, agentsUsed = [], responseType = 'text') {
+        function updateTypingCardWithAnswer(answer, citations = [], places = [], directions = null, mapsWidgetToken = null, agentsUsed = [], responseType = 'text', trailsDiscovery = null, trailDetails = null) {
             const typingCard = document.getElementById('typing-card');
             if (!typingCard) return;
 
@@ -1422,6 +3039,14 @@
 
             // Build directions map HTML if present
             const directionsHtml = renderDirectionsMap(directions);
+
+            // Build trails HTML if present
+            let trailsHtml = '';
+            if (trailsDiscovery) {
+                trailsHtml = renderTrailsDiscovery(trailsDiscovery);
+            } else if (trailDetails) {
+                trailsHtml = renderTrailDetails(trailDetails);
+            }
 
             // Build citations HTML if present
             let citationsHtml = '';
@@ -1459,22 +3084,19 @@
                 </span>
             `;
 
-            // Parse markdown
-            let contentHtml = marked.parse(answer);
+            // Parse markdown - but hide text content if there's a rich card
+            let contentHtml = '';
+            const hasRichCard = trailsHtml || directionsHtml;
+            if (!hasRichCard) {
+                contentHtml = marked.parse(answer);
+            }
 
             // Update the answer section in place
             const answerDiv = typingCard.querySelector('.conversation-answer');
             answerDiv.innerHTML = `
-        <div class="conversation-answer-header">
-            <i data-lucide="bot" style="width:16px;height:16px;"></i>
-            <span>Campground Assistant</span>
-            ${responseTypeHtml}
-            ${agentsHtml}
-        </div>
-        <div class="conversation-answer-content">
-            ${contentHtml}
-        </div>
+        ${contentHtml ? `<div class="conversation-answer-content">${contentHtml}</div>` : ''}
         ${directionsHtml}
+        ${trailsHtml}
         ${placesHtml}
         ${citationsHtml}
     `;
@@ -1524,6 +3146,12 @@
                 const data = await response.json();
 
                 // Update the typing card in place with the answer, places, directions, widget, agents used, and response type
+                // Debug: Log widget token
+                console.log('API Response - maps_widget_token:', data.maps_widget_token ? 'PRESENT (' + data.maps_widget_token.length + ' chars)' : 'NOT present');
+                console.log('API Response - response_type:', data.response_type);
+                console.log('API Response - trails_discovery:', data.trails_discovery ? 'PRESENT' : 'NOT present');
+                console.log('API Response - trail_details:', data.trail_details ? 'PRESENT' : 'NOT present');
+
                 updateTypingCardWithAnswer(
                     data.response,
                     data.citations || [],
@@ -1531,14 +3159,16 @@
                     data.directions || null,
                     data.maps_widget_token || null,
                     data.agents_used || [],
-                    data.response_type || 'text'
+                    data.response_type || 'text',
+                    data.trails_discovery || null,
+                    data.trail_details || null
                 );
 
                 // Add to history
                 chatHistory.push({ role: 'assistant', content: data.response });
 
             } catch (error) {
-                updateTypingCardWithAnswer('Sorry, I encountered an error. Please try again.', [], [], null);
+                updateTypingCardWithAnswer('Sorry, I encountered an error. Please try again.', [], [], null, null, [], 'text', null, null);
                 console.error('Chat error:', error);
             }
 

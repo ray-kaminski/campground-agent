@@ -186,14 +186,34 @@ def after_model_callback(
         else:
             logger.info(f"Widget token is empty/None: {gm.google_maps_widget_context_token if hasattr(gm, 'google_maps_widget_context_token') else 'NO ATTR'}")
 
-        # Extract grounding chunks (place data)
+        # Extract grounding chunks (place data) - check MAPS format first
         if hasattr(gm, 'grounding_chunks') and gm.grounding_chunks:
-            for chunk in gm.grounding_chunks:
-                if hasattr(chunk, 'web') and chunk.web:
-                    grounding_chunks.append({
+            for i, chunk in enumerate(gm.grounding_chunks):
+                chunk_data = {}
+                
+                # Check for Google Maps grounding (has place_id)
+                if hasattr(chunk, 'maps') and chunk.maps:
+                    maps_chunk = chunk.maps
+                    place_id = getattr(maps_chunk, 'place_id', None)
+                    if place_id:
+                        chunk_data = {
+                            "place_id": place_id,
+                            "title": getattr(maps_chunk, 'title', ''),
+                        }
+                        logger.info(f"Extracted Maps place_id: {place_id}")
+                
+                # Fallback to web grounding
+                elif hasattr(chunk, 'web') and chunk.web:
+                    uri = getattr(chunk.web, 'uri', '')
+                    chunk_data = {
                         "title": getattr(chunk.web, 'title', ''),
-                        "uri": getattr(chunk.web, 'uri', ''),
-                    })
+                        "uri": uri,
+                    }
+                
+                if chunk_data:
+                    grounding_chunks.append(chunk_data)
+            
+            logger.info(f"Total grounding_chunks extracted: {len(grounding_chunks)}")
     else:
         logger.info("No grounding_metadata on llm_response directly")
 
@@ -210,8 +230,8 @@ def after_model_callback(
                     widget_token = gm.google_maps_widget_context_token
                     logger.info(f"Captured widget token from candidate: {widget_token[:50]}...")
 
-    # If we have a widget token, inject it into the response
-    if widget_token and hasattr(llm_response, 'content') and llm_response.content:
+    # Inject widget data if we have token OR grounding_chunks (for fallback rendering)
+    if (widget_token or grounding_chunks) and hasattr(llm_response, 'content') and llm_response.content:
         content = llm_response.content
 
         # Find the text part and append the widget metadata
@@ -221,16 +241,17 @@ def after_model_callback(
                     # Create the widget metadata block
                     widget_metadata = json.dumps({
                         "widget_token": widget_token,
-                        "grounding_chunks": grounding_chunks
+                        "grounding_chunks": grounding_chunks,
+                        "place_ids": [c.get("place_id") for c in grounding_chunks if c.get("place_id")]
                     })
 
                     # Append to the response text
                     original_text = part.text
                     part.text = f"{original_text}\n\n[MAPS_WIDGET_DATA:{widget_metadata}]"
-                    logger.info("Injected widget token into response")
+                    logger.info(f"Injected widget data: token={'yes' if widget_token else 'no'}, places={len(grounding_chunks)}")
                     break
     else:
-        logger.info(f"No widget token found or no content. widget_token={widget_token is not None}")
+        logger.info(f"No widget data to inject. widget_token={widget_token is not None}, chunks={len(grounding_chunks)}")
 
     # Return None to let the (possibly modified) response pass through
     return None
@@ -324,85 +345,120 @@ def get_campground_info(category: str) -> str:
         return json.dumps({"error": f"Unknown category: {category}. Use one of: basic_info, amenities, site_types, activities, nearby_attractions, rules, pricing, all"})
 
 
+def render_navigation_card(
+    destination: str,
+    origin: str = "",
+    travel_mode: str = "DRIVING"
+) -> str:
+    """
+    Render a navigation card with directions to a destination.
+    
+    USE THIS TOOL when the user asks for directions, routes, or how to get somewhere.
+    
+    Trigger phrases: "directions to", "how do I get to", "route to", "navigate to", "drive to"
+    
+    Examples:
+    - "directions to Target" → destination="Target, Bakersfield, CA"
+    - "how do I get to Starbucks" → destination="Starbucks, Bakersfield, CA"
+    - "route to the nearest gas station" → destination="gas station, Bakersfield, CA"
+    
+    Args:
+        destination: The destination name with city. Examples:
+                    - "Target, Bakersfield, CA"
+                    - "Starbucks, Bakersfield, CA"
+                    - "Walmart, Bakersfield, CA"
+                    Google Maps will find the nearest matching location.
+        origin: The starting location. Leave empty/null to default to the campground.
+               Only set if user explicitly mentions where they're starting from.
+        travel_mode: DRIVING (default), WALKING, BICYCLING, or TRANSIT.
+    
+    Returns:
+        JSON string with navigation data for the frontend to render.
+    """
+    # Default origin to campground if not specified
+    if not origin or origin == "user_current_location":
+        origin = f"{CAMPGROUND_NAME}, {CAMPGROUND_LOCATION.get('city', 'Bakersfield')}, {CAMPGROUND_LOCATION.get('state', 'CA')}"
+    
+    # Return structured data for the frontend to render
+    navigation_data = {
+        "type": "navigation",
+        "action": "render_navigation_card",
+        "origin": origin,
+        "destination": destination,
+        "travel_mode": travel_mode,
+        "campground_location": {
+            "lat": CAMPGROUND_LAT,
+            "lng": CAMPGROUND_LNG,
+            "name": CAMPGROUND_NAME
+        }
+    }
+    return json.dumps(navigation_data)
+
+
+
+
 # =============================================================================
 # SUB-AGENTS
 # =============================================================================
 
-# MapsAgent: Handles external place queries using Google Maps grounding
-# This agent is isolated because google_maps grounding cannot be combined with function tools
+# MapsAgent: Handles SPECIFIC named place queries using Google Maps grounding
+# Returns rich grounded data with photos and reviews
 maps_agent = Agent(
     name="MapsAgent",
-    description=f"""Use this agent for location and maps queries:
+    description=f"""Use this agent when the user asks about a SPECIFIC NAMED place:
 
-    1. FIND PLACES near the campground:
-       - "Find restaurants nearby"
-       - "What grocery stores are close?"
-       - "Show me hiking trails"
-       - "Where can I get gas?"
+    ALWAYS USE MapsAgent FOR:
+    - "Tell me about Olive Garden" → YES, named place
+    - "What is Pizza Hut like?" → YES, named place
+    - "Is there a Target nearby?" → YES, named place  
+    - "Tell me about [restaurant/store name]" → YES, named place
+    - "What are the hours for Walmart?" → YES, named place
 
-    2. GET DIRECTIONS to/from the campground:
-       - "How do I get to the campground from [location]?"
-       - "Directions to [place] from here"
-       - "What's the best route to [destination]?"
-       - "How far is [place] from the campground?"
+    ALSO USE MapsAgent FOR generic discovery:
+    - "Find restaurants nearby" → YES, use MapsAgent
+    - "Where can I get gas?" → YES, use MapsAgent
 
-    3. ROUTE INFORMATION:
-       - "What roads should I take?"
-       - "Are there any steep grades on the way?"
-       - "Is the route RV-friendly?"
+    MapsAgent uses Google Maps grounding to provide RICH information:
+    - Ratings and reviews
+    - Hours of operation
+    - Photos (rendered as interactive widget)
+    - Detailed descriptions
 
-    The MapsAgent uses Google Maps for real-time place and routing information
-    centered on {CAMPGROUND_NAME} in {CAMPGROUND_LOCATION.get('city', 'Bakersfield')}, {CAMPGROUND_LOCATION.get('state', 'CA')}.
-
-    Location: {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
+    Location context: {CAMPGROUND_NAME} at {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
     """,
     model="gemini-2.5-flash",
-    instruction=f"""You help find places and directions near {CAMPGROUND_NAME} campground.
+    instruction=f"""You are a helpful assistant for finding and describing places near {CAMPGROUND_NAME} campground.
 Location: {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
 
-Use Google Maps to answer questions about:
-- Finding nearby places (restaurants, stores, trails, gas stations)
-- Directions to/from the campground
-- Distance and route information
+Handle TWO types of queries:
 
-RESPONSE FORMAT - ALWAYS RESPOND WITH VALID JSON:
+1. DISCOVERY queries ("find restaurants", "where can I get gas"):
+   - List the top 3-5 nearby options
+   - Include name, distance, rating, and a brief note about each
+   - Mention which one you'd recommend and why
 
-For PLACES queries, return JSON like this:
-```json
-{{
-  "type": "places",
-  "summary": "Brief 1-sentence summary of what was found",
-  "places": [
-    {{
-      "name": "Place Name",
-      "address": "Full address",
-      "rating": 4.5,
-      "reviews": 123,
-      "distance": "2.3 km",
-      "drive_time": "5 min",
-      "description": "Brief description of the place"
-    }}
-  ]
-}}
-```
+2. SPECIFIC place queries ("tell me about Olive Garden"):
+   - Provide detailed info about that specific place
+   - Include rating, hours, notable features, distance
+   - Share camper-relevant tips
 
-For DIRECTIONS queries, return JSON like this:
-```json
-{{
-  "type": "directions",
-  "summary": "Brief summary of the route",
-  "origin": "Starting location",
-  "destination": "{CAMPGROUND_NAME}",
-  "distance": "Total distance",
-  "duration": "Total drive time",
-  "steps": ["Step 1 description", "Step 2 description"]
-}}
-```
+IMPORTANT: 
+- Respond in natural, conversational English - NOT JSON
+- The Google Maps grounding will automatically attach rich data (photos, reviews, map)
+- Your text response will appear alongside the grounded maps widget
 
-IMPORTANT:
-- Always return valid JSON only, no other text
-- Include 3-5 most relevant places
-- Use the exact field names shown above""",
+Example for "find restaurants nearby":
+"There are several great dining options near the campground! The closest is Denny's (0.5 miles, 3.8★) 
+which is open 24/7 - perfect for late arrivals. For Italian, Olive Garden (3 miles, 4.2★) has 
+unlimited breadsticks and great family portions. If you want something quick, In-N-Out (2 miles, 4.5★) 
+is a California classic. I'd recommend Olive Garden for a sit-down meal or In-N-Out for a quick bite."
+
+Example for "tell me about Olive Garden":
+"The Olive Garden on Rosedale Highway is about 3 miles from the campground, a quick 7-minute drive. 
+It's an Italian-American chain with a 4.2 rating. They're famous for unlimited breadsticks. 
+Open daily 11 AM - 10 PM. Great for families with generous portions."
+
+This enables the rich Google Maps card with photos and reviews to render.""",
     tools=[campground_maps_grounding],
     after_model_callback=after_model_callback,
 )
@@ -453,6 +509,155 @@ Keep responses concise and cite sources inline.""",
 
 
 # =============================================================================
+# TRAILS DISCOVERY TOOLS AND AGENT
+# =============================================================================
+
+def render_trails_discovery(
+    trails: str,
+    summary: str = ""
+) -> str:
+    """
+    Render a trails discovery card showing multiple hiking trails nearby.
+    
+    USE THIS TOOL when user asks about trails, hikes, or outdoor activities nearby.
+    
+    Trigger phrases: "trails nearby", "hiking trails", "where can I hike", "outdoor activities",
+                    "nature walks", "what trails", "good hikes"
+    
+    Args:
+        trails: JSON string array of trail objects, each with:
+                - name: Trail name
+                - distance_from_camp: Distance from campground (e.g., "5.2 miles")
+                - difficulty: Easy, Moderate, Hard
+                - length: Trail length (e.g., "3.5 mile loop")
+                - highlights: Brief description of key features
+                - rating: Star rating if available
+        summary: A brief narrative introduction about trails in the area.
+    
+    Returns:
+        JSON string for frontend to render trail discovery cards.
+    """
+    discovery_data = {
+        "type": "trails_discovery",
+        "action": "render_trails_discovery",
+        "summary": summary,
+        "trails": trails,
+        "campground_location": {
+            "lat": CAMPGROUND_LAT,
+            "lng": CAMPGROUND_LNG,
+            "name": CAMPGROUND_NAME
+        }
+    }
+    return json.dumps(discovery_data)
+
+
+def render_trail_details(
+    trail_name: str,
+    description: str = "",
+    difficulty: str = "",
+    length: str = "",
+    elevation_gain: str = "",
+    trail_type: str = "",
+    best_seasons: str = "",
+    highlights: str = "",
+    warnings: str = "",
+    amenities: str = "",
+    address: str = ""
+) -> str:
+    """
+    Render detailed information about a specific trail.
+    
+    USE THIS TOOL when user asks for details about a specific trail.
+    
+    Trigger phrases: "tell me about [trail name]", "details on [trail]", 
+                    "what's [trail name] like", "[trail name] trail"
+    
+    Args:
+        trail_name: Name of the trail
+        description: Detailed narrative description of the trail experience
+        difficulty: Easy, Moderate, Hard, Expert
+        length: Trail length (e.g., "4.2 miles round trip")
+        elevation_gain: Elevation change (e.g., "850 ft")
+        trail_type: Loop, Out-and-back, Point-to-point
+        best_seasons: Best times to visit
+        highlights: Key features and scenic points
+        warnings: Safety notes, hazards, or restrictions
+        amenities: Parking, restrooms, water, etc.
+        address: Trailhead address for directions
+    
+    Returns:
+        JSON string for frontend to render trail details page.
+    """
+    details_data = {
+        "type": "trail_details",
+        "action": "render_trail_details",
+        "trail": {
+            "name": trail_name,
+            "description": description,
+            "difficulty": difficulty,
+            "length": length,
+            "elevation_gain": elevation_gain,
+            "trail_type": trail_type,
+            "best_seasons": best_seasons,
+            "highlights": highlights,
+            "warnings": warnings,
+            "amenities": amenities,
+            "address": address
+        },
+        "campground_location": {
+            "lat": CAMPGROUND_LAT,
+            "lng": CAMPGROUND_LNG,
+            "name": CAMPGROUND_NAME
+        }
+    }
+    return json.dumps(details_data)
+
+
+# TrailsAgent: Specialized agent for trail/hiking discovery
+# Uses function tools to render trail cards
+trails_agent = Agent(
+    name="TrailsAgent",
+    description=f"""Use this agent for ALL trail and hiking related queries:
+    
+    ALWAYS USE TrailsAgent FOR:
+    - "What trails are nearby?"
+    - "Where can I go hiking?"
+    - "Find hiking trails"
+    - "Good hikes near the campground"
+    - "Nature walks nearby"
+    - "Tell me about [trail name]"
+    - "What's [trail name] like?"
+    - "Outdoor activities nearby"
+    
+    Location context: {CAMPGROUND_NAME} at {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
+    """,
+    model="gemini-2.5-flash",
+    instruction=f"""⚠️ MANDATORY: You MUST call render_trails_discovery or render_trail_details. DO NOT respond with plain text.
+
+You are a trail expert for {CAMPGROUND_NAME} ({CAMPGROUND_LOCATION.get('city', 'Unknown')}, {CAMPGROUND_LOCATION.get('state', 'CA')}).
+Location: {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
+
+## DISCOVERY QUERIES ("trails nearby", "where to hike"):
+CALL render_trails_discovery with summary and trails JSON array.
+
+## SPECIFIC TRAIL ("tell me about X trail"):  
+CALL render_trail_details with trail info.
+
+Example - YOU MUST format calls exactly like this:
+
+For discovery:
+render_trails_discovery(summary="The area has great trails...", trails='[{{"name":"Trail A","distance_from_camp":"5 miles","difficulty":"Easy","length":"2 mile loop","highlights":"River views","rating":"4.5"}}]')
+
+For details:
+render_trail_details(trail_name="Trail A", description="A beautiful trail...", difficulty="Easy", length="2 miles", elevation_gain="100 ft", trail_type="Loop", best_seasons="Spring", highlights="River, birds", warnings="None", amenities="Parking", address="Trail A, City, State")
+
+⚠️ NEVER respond with text. ALWAYS call one of these tools!
+""",
+    tools=[render_trails_discovery, render_trail_details],
+)
+
+
+# =============================================================================
 # ROOT AGENT (Orchestrator)
 # =============================================================================
 
@@ -462,62 +667,79 @@ root_agent = Agent(
     instruction=f"""You are a helpful assistant for campers staying at {CAMPGROUND_NAME}
 in {CAMPGROUND_LOCATION.get('city', 'Bakersfield')}, {CAMPGROUND_LOCATION.get('state', 'CA')}.
 
-You have access to three specialized tools:
+You have access to these specialized tools:
 
-1. **get_campground_info**: Use this ONLY for questions about what THIS campground offers:
-   - Amenities at the campground (pool, wifi, laundry, etc.)
-   - Site types available (RV, tent, hookups)
-   - On-site activities AT the campground
-   - Campground policies and rules
-   - Contact information
-   - Pricing
+1. **get_campground_info**: Use for questions about THIS campground:
+   - Amenities (pool, wifi, laundry)
+   - Site types (RV, tent, hookups)
+   - Campground policies, rules, pricing
 
-2. **MapsAgent**: Use this for ANY question about places OUTSIDE the campground:
-   - Find places nearby (restaurants, gas stations, trails, stores, parks, attractions)
-   - "Are there trails nearby?" → MapsAgent (NOT get_campground_info)
-   - "Where can I find..." → MapsAgent
-   - Get directions to/from anywhere
-   - Route planning and distance questions
-   - "How do I get to..." or "Directions to..."
+2. **render_navigation_card**: Use for DIRECTIONS queries:
+   - "How do I get to Starbucks?" → destination="Starbucks, Bakersfield, CA"
+   - "Directions to Target" → destination="Target, Bakersfield, CA"
+   DEFAULT: Origin is the campground unless specified.
 
-3. **SearchAgent**: Use this for general questions needing current web info:
+3. **render_trails_discovery**: Use for trail DISCOVERY queries:
+   - "What trails are nearby?" → render_trails_discovery
+   - "Where can I go hiking?" → render_trails_discovery
+   - "Find hiking trails" → render_trails_discovery
+   Call with summary text and JSON array of trails.
+
+4. **render_trail_details**: Use for SPECIFIC trail queries:
+   - "Tell me about Hart Park" → render_trail_details
+   - "What's Wind Wolves Preserve like?" → render_trail_details
+   Call with trail details (name, description, difficulty, etc.).
+
+4. **MapsAgent**: Use for places (restaurants, stores, gas stations):
+   - "Find restaurants nearby" → MapsAgent
+   - "Tell me about Olive Garden" → MapsAgent
+   - "Where can I get gas?" → MapsAgent
+
+5. **SearchAgent**: Use for general info:
    - Weather forecasts
    - Local events
-   - Regulations and permits
-   - General information (history, tips, etc.)
+   - Regulations
 
-ROUTING RULES - FOLLOW THESE EXACTLY:
-1. Questions about EXTERNAL places (trails, restaurants, stores, attractions, parks nearby) → ALWAYS use MapsAgent
-2. Questions about THIS campground's amenities, sites, rules, pricing → use get_campground_info
-3. Questions needing current info (weather, events, news) → use SearchAgent
-4. Directions or route questions → ALWAYS use MapsAgent
+ROUTING RULES - CHECK IN THIS ORDER:
 
-CRITICAL: When users ask about "trails nearby", "restaurants near here", "what's around", etc.,
-these are EXTERNAL place queries and MUST go to MapsAgent for Google Maps grounded results.
-Do NOT use get_campground_info for external places - it only has info about the campground itself.
+**STEP 1: DIRECTIONS keywords?**
+"directions", "how do I get to", "route to", "navigate to"
+→ Use render_navigation_card
 
-HANDLING MAPSAGENT RESPONSES:
-MapsAgent returns JSON data. When you receive JSON from MapsAgent:
-- Pass the JSON through EXACTLY as received - do not modify or summarize it
-- The frontend will parse and render it appropriately
+**STEP 2: TRAIL/HIKING keywords?**
+"trail", "trails", "hiking", "hike", "nature walk", "outdoor activities"
+→ Use render_trails_discovery for discovery OR render_trail_details for specific trail
+
+**STEP 3: PLACES keywords?**
+Restaurant, store, gas, coffee, food, shopping
+→ Use MapsAgent
+
+**STEP 4: CAMPGROUND keywords?**
+Amenities, rules, sites, hookups, pool, wifi
+→ Use get_campground_info
+
+**STEP 5: General info**
+Weather, events, regulations
+→ Use SearchAgent
+
+CRITICAL: Trail queries use render_trails_discovery or render_trail_details, NOT MapsAgent!
+- "What trails are nearby?" → render_trails_discovery
+- "Where can I hike?" → render_trails_discovery
+- "Tell me about Hart Park" → render_trail_details
 
 RESPONSE FORMAT:
-For campground_info responses, format naturally and add:
-[RESPONSE_TYPE: campground_info]
-
-For MapsAgent responses, pass through the JSON exactly as received.
-
-For SearchAgent responses, format naturally and add:
-[RESPONSE_TYPE: search] or [RESPONSE_TYPE: weather]
-
-For greetings or general conversation:
-[RESPONSE_TYPE: text]
+[RESPONSE_TYPE: campground_info] for campground queries
+[RESPONSE_TYPE: search] or [RESPONSE_TYPE: weather] for SearchAgent
+[RESPONSE_TYPE: text] for general conversation
 
 Be friendly and helpful!
 """,
     tools=[
+        render_trails_discovery,  # For trail discovery
+        render_trail_details,  # For specific trail details
+        AgentTool(agent=maps_agent),  # For places queries (grounded maps)
+        render_navigation_card,  # For directions
         get_campground_info,
-        AgentTool(agent=maps_agent),
         AgentTool(agent=search_agent),
     ],
 )
