@@ -1417,6 +1417,216 @@
             background: white;
         }
 
+        /* Trail Photos - Thumbnail style with click to expand */
+        .trail-photo-figure {
+            display: inline-block;
+            margin: 0.75rem 0;
+            padding: 0;
+            float: right;
+            margin-left: 1rem;
+            max-width: 180px;
+        }
+
+        .trail-photo-inline {
+            width: 180px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: var(--radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .trail-photo-inline:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .trail-photo-figure figcaption {
+            margin-top: 0.35rem;
+            font-size: 0.7rem;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .trail-photo-figure .photo-attribution {
+            display: block;
+            font-size: 0.6rem;
+            color: #aaa;
+            font-style: normal;
+        }
+
+        /* New thumbnail style for inline trail photos */
+        .trail-photo-thumbnail {
+            float: right;
+            margin-left: 1rem;
+            margin-bottom: 0.75rem;
+            width: 180px;
+            height: 120px;
+            overflow: hidden;
+            border-radius: var(--radius);
+            cursor: pointer;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease;
+        }
+
+        .trail-photo-thumbnail:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .trail-photo-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .trail-photo-thumbnail .photo-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .trail-photo-thumbnail .photo-attribution {
+            font-size: 0.65rem;
+            opacity: 0.8;
+        }
+
+        .photo-count-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        /* Lightbox for full-size photo gallery */
+        .photo-lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-lightbox.active {
+            display: flex;
+        }
+
+        .photo-lightbox img {
+            max-width: 85vw;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .photo-lightbox .lightbox-caption {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .photo-lightbox .lightbox-counter {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 0.5rem;
+        }
+
+        .photo-lightbox .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.8;
+            z-index: 10001;
+        }
+
+        .photo-lightbox .lightbox-close:hover {
+            opacity: 1;
+        }
+
+        .photo-lightbox .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 3rem;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 1rem;
+            user-select: none;
+            transition: opacity 0.2s;
+        }
+
+        .photo-lightbox .lightbox-nav:hover {
+            opacity: 1;
+        }
+
+        .photo-lightbox .lightbox-prev {
+            left: 20px;
+        }
+
+        .photo-lightbox .lightbox-next {
+            right: 20px;
+        }
+
+        .photo-lightbox .lightbox-nav.disabled {
+            opacity: 0.2;
+            cursor: default;
+        }
+
+        /* Photo thumbnail wrapper for count badge */
+        .photo-thumbnail-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .photo-count {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+
+        .photo-count::before {
+            content: "📷 ";
+        }
+
+        /* Clear float after trail sections */
+        .trail-section-clear {
+            clear: both;
+        }
+
         /* Directions Card */
         .directions-container {
             margin-top: 1rem;
@@ -1959,6 +2169,25 @@
             padding: 0.75rem 1.25rem;
             border-radius: 20px;
             font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+
+        .typing-indicator .typing-text {
+            min-width: 150px;
+        }
+
+        .streaming-content {
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .streaming-content[style*="display: block"] {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .typing-dots {
@@ -2026,6 +2255,18 @@
 </head>
 
 <body>
+
+    <!-- Photo Lightbox with Gallery Navigation -->
+    <div id="photo-lightbox" class="photo-lightbox" onclick="handleLightboxClick(event)">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <span class="lightbox-nav lightbox-prev" onclick="lightboxPrev(event)">&#10094;</span>
+        <img src="" alt="">
+        <span class="lightbox-nav lightbox-next" onclick="lightboxNext(event)">&#10095;</span>
+        <div class="lightbox-caption">
+            <div class="lightbox-title"></div>
+            <div class="lightbox-counter"></div>
+        </div>
+    </div>
 
     <div class="container">
         <!-- Header -->
@@ -2335,7 +2576,7 @@
             return div.innerHTML;
         }
 
-        // Show typing indicator as a card
+        // Show typing indicator as a card (with agent status)
         function showTypingCard(question) {
             const container = document.getElementById('conversation-area');
 
@@ -2347,18 +2588,64 @@
             <div class="conversation-question-bubble">${escapeHtml(question)}</div>
         </div>
         <div class="conversation-answer">
-            <div class="typing-indicator">
-                <span>Thinking</span>
+            <div class="typing-indicator" id="typing-status">
+                <span class="typing-text">💭 Thinking...</span>
                 <div class="typing-dots">
                     <span></span><span></span><span></span>
                 </div>
             </div>
+            <div class="streaming-content" id="streaming-content" style="display:none;"></div>
         </div>
     `;
 
             container.appendChild(card);
             lucide.createIcons();
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Update the typing status text
+        function updateTypingStatus(statusText) {
+            const typingText = document.querySelector('#typing-status .typing-text');
+            if (typingText) {
+                typingText.textContent = statusText;
+            }
+        }
+
+        // Show streaming content
+        function showStreamingContent(text) {
+            const indicator = document.getElementById('typing-status');
+            const streamingDiv = document.getElementById('streaming-content');
+            
+            if (indicator && streamingDiv) {
+                indicator.style.display = 'none';
+                streamingDiv.style.display = 'block';
+                // Parse markdown and render
+                streamingDiv.innerHTML = `<div class="conversation-answer-content">${marked.parse(text)}</div>`;
+            }
+        }
+
+        // Append to streaming content
+        function appendStreamingContent(chunk) {
+            const streamingDiv = document.getElementById('streaming-content');
+            if (streamingDiv) {
+                // Get current raw text, append chunk, re-render
+                const currentText = streamingDiv.dataset.rawText || '';
+                const newText = currentText + chunk;
+                streamingDiv.dataset.rawText = newText;
+                streamingDiv.innerHTML = `<div class="conversation-answer-content">${marked.parse(newText)}</div>`;
+                streamingDiv.style.display = 'block';
+                
+                // Hide typing indicator once we have content
+                const indicator = document.getElementById('typing-status');
+                if (indicator && newText.length > 10) {
+                    indicator.style.display = 'none';
+                }
+                
+                // Scroll the typing card into view
+                const typingCard = document.getElementById('typing-card');
+                if (typingCard) {
+                    typingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         }
 
         // Generate star rating HTML
@@ -3060,6 +3347,215 @@
             });
         }
 
+        // Store backend-provided place photos for current response
+        // Format: {place_name: [array of photo urls]}
+        let currentPlacePhotos = {};
+        let usedPlaces = new Set(); // Track which places have had photos inserted
+
+        // Process markdown to insert inline photos from backend-provided URLs
+        // placePhotos format: {place_name: [url1, url2, ...]} or {place_name: url} for backwards compat
+        function processPlacePhotos(markdown, placePhotos) {
+            if (!placePhotos || Object.keys(placePhotos).length === 0) {
+                return markdown;
+            }
+            
+            // Normalize to array format and store for lightbox
+            currentPlacePhotos = {};
+            for (const [name, urls] of Object.entries(placePhotos)) {
+                currentPlacePhotos[name] = Array.isArray(urls) ? urls : [urls];
+            }
+            usedPlaces = new Set();
+            
+            let result = markdown;
+            
+            // Deduplicate: only insert one thumbnail per unique place
+            const processedPlaces = new Set();
+            
+            // For each place with photos, insert thumbnail after the heading
+            for (const [placeName, photoUrls] of Object.entries(currentPlacePhotos)) {
+                if (processedPlaces.has(placeName) || photoUrls.length === 0) continue;
+                
+                const escapedName = placeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const headingRegex = new RegExp(`(##?\\s*\\d*\\.?\\s*${escapedName}[^\\n]*\\n)`, 'i');
+                
+                const match = result.match(headingRegex);
+                if (match && !usedPlaces.has(placeName)) {
+                    usedPlaces.add(placeName);
+                    processedPlaces.add(placeName);
+                    // Insert marker for this place's photo gallery
+                    const photoHtml = `\n![${placeName}](photogallery:${encodeURIComponent(placeName)})\n`;
+                    result = result.replace(match[0], match[0] + photoHtml);
+                }
+            }
+            
+            // Replace photogallery: markers with thumbnail that opens gallery
+            result = result.replace(/!\[([^\]]*)\]\(photogallery:([^)]+)\)/g, (match, altText, encodedName) => {
+                const placeName = decodeURIComponent(encodedName);
+                const photoUrls = currentPlacePhotos[placeName];
+                if (!photoUrls || photoUrls.length === 0) return '';
+                
+                const thumbnailUrl = photoUrls[0]; // First photo as thumbnail
+                const photoCount = photoUrls.length;
+                const countBadge = photoCount > 1 ? `<span class="photo-count">${photoCount}</span>` : '';
+                
+                return `<figure class="trail-photo-figure">
+                    <div class="photo-thumbnail-wrapper">
+                        <img src="${thumbnailUrl}" alt="${altText}" class="trail-photo-inline" 
+                             loading="lazy" 
+                             onclick="openLightbox('${placeName.replace(/'/g, "\\'")}')"
+                             onerror="this.parentElement.parentElement.remove()">
+                        ${countBadge}
+                    </div>
+                    <figcaption>${altText}<span class="photo-attribution">via Google</span></figcaption>
+                </figure>`;
+            });
+            
+            return result;
+        }
+
+        // Also handle manual place_photo: syntax if LLM uses it
+        function processManualPlacePhotos(markdown) {
+            const placePhotoRegex = /!\[([^\]]*)\]\(place_photo:([^)]+)\)/g;
+            
+            return markdown.replace(placePhotoRegex, (match, altText, placeName) => {
+                // Try multiple name variations for matching
+                const variations = [
+                    placeName.replace(/_/g, ' ').trim(),  // Wind_Wolves_Preserve -> Wind Wolves Preserve
+                    placeName.trim(),                     // Keep original
+                    placeName.replace(/_/g, ' ').trim().toLowerCase(),  // Lowercase
+                ];
+                
+                let photoUrls = null;
+                let matchedName = null;
+                
+                // Try to find matching photos
+                for (const variation of variations) {
+                    // Direct match
+                    if (currentPlacePhotos[variation]) {
+                        photoUrls = currentPlacePhotos[variation];
+                        matchedName = variation;
+                        break;
+                    }
+                    // Case-insensitive match
+                    for (const [key, urls] of Object.entries(currentPlacePhotos)) {
+                        if (key.toLowerCase() === variation.toLowerCase()) {
+                            photoUrls = urls;
+                            matchedName = key;
+                            break;
+                        }
+                    }
+                    if (photoUrls) break;
+                }
+                
+                if (photoUrls && photoUrls.length > 0 && matchedName && !usedPlaces.has(matchedName)) {
+                    usedPlaces.add(matchedName);
+                    // Use smaller thumbnail for inline display
+                    const thumbnailUrl = photoUrls[0].replace('maxWidthPx=1200', 'maxWidthPx=300');
+                    const photoCount = photoUrls.length;
+                    const countBadge = photoCount > 1 ? `<span class="photo-count-badge">📷 ${photoCount}</span>` : '';
+                    
+                    return `<div class="trail-photo-thumbnail" data-place-name="${matchedName}" data-photo-index="0">
+                        <img src="${thumbnailUrl}" alt="${altText}" loading="lazy" 
+                             onerror="this.parentElement.remove()">
+                        <div class="photo-caption">
+                            ${altText} <span class="photo-attribution">via Google</span>
+                            ${countBadge}
+                        </div>
+                    </div>`;
+                }
+                // If no match found, just remove the marker
+                console.warn(`No photos found for place: ${placeName} (tried: ${variations.join(', ')})`);
+                return '';
+            });
+        }
+
+        // Lightbox gallery state
+        let lightboxPhotos = [];
+        let lightboxCurrentIndex = 0;
+        let lightboxCaption = '';
+
+        // Open lightbox with gallery of photos
+        function openLightbox(placeName) {
+            const photos = currentPlacePhotos[placeName];
+            if (!photos || photos.length === 0) return;
+            
+            lightboxPhotos = Array.isArray(photos) ? photos : [photos];
+            lightboxCurrentIndex = 0;
+            lightboxCaption = placeName;
+            
+            updateLightboxDisplay();
+            
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Add keyboard navigation
+            document.addEventListener('keydown', handleLightboxKeydown);
+        }
+
+        function updateLightboxDisplay() {
+            const lightbox = document.getElementById('photo-lightbox');
+            const img = lightbox.querySelector('img');
+            const titleEl = lightbox.querySelector('.lightbox-title');
+            const counterEl = lightbox.querySelector('.lightbox-counter');
+            const prevBtn = lightbox.querySelector('.lightbox-prev');
+            const nextBtn = lightbox.querySelector('.lightbox-next');
+            
+            img.src = lightboxPhotos[lightboxCurrentIndex];
+            titleEl.textContent = lightboxCaption;
+            
+            if (lightboxPhotos.length > 1) {
+                counterEl.textContent = `${lightboxCurrentIndex + 1} / ${lightboxPhotos.length}`;
+                counterEl.style.display = 'block';
+                prevBtn.classList.toggle('disabled', lightboxCurrentIndex === 0);
+                nextBtn.classList.toggle('disabled', lightboxCurrentIndex === lightboxPhotos.length - 1);
+            } else {
+                counterEl.style.display = 'none';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+        }
+
+        function lightboxPrev(event) {
+            event.stopPropagation();
+            if (lightboxCurrentIndex > 0) {
+                lightboxCurrentIndex--;
+                updateLightboxDisplay();
+            }
+        }
+
+        function lightboxNext(event) {
+            event.stopPropagation();
+            if (lightboxCurrentIndex < lightboxPhotos.length - 1) {
+                lightboxCurrentIndex++;
+                updateLightboxDisplay();
+            }
+        }
+
+        function handleLightboxClick(event) {
+            // Only close if clicking the backdrop, not the image or nav
+            if (event.target === event.currentTarget) {
+                closeLightbox();
+            }
+        }
+
+        function handleLightboxKeydown(event) {
+            if (event.key === 'Escape') closeLightbox();
+            if (event.key === 'ArrowLeft') lightboxPrev(event);
+            if (event.key === 'ArrowRight') lightboxNext(event);
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+            document.removeEventListener('keydown', handleLightboxKeydown);
+            
+            // Reset nav visibility
+            lightbox.querySelector('.lightbox-prev').style.display = '';
+            lightbox.querySelector('.lightbox-next').style.display = '';
+        }
+
         // Render Google Maps contextual widget from token
         // Uses dynamic property assignment for better re-hydration
         function renderMapsWidget(token) {
@@ -3192,7 +3688,7 @@
         }
 
         // Update typing card with actual answer (in place)
-        function updateTypingCardWithAnswer(answer, citations = [], places = [], directions = null, mapsWidgetToken = null, agentsUsed = [], responseType = 'text', trailsDiscovery = null, trailDetails = null) {
+        function updateTypingCardWithAnswer(answer, citations = [], places = [], directions = null, mapsWidgetToken = null, agentsUsed = [], responseType = 'text', trailsDiscovery = null, trailDetails = null, placePhotos = {}) {
             const typingCard = document.getElementById('typing-card');
             if (!typingCard) return;
 
@@ -3200,19 +3696,23 @@
             typingCard.classList.add(`response-${responseType}`);
 
             // Prefer widget if available, then rich place cards, then basic place IDs
+            // BUT skip if we have placePhotos (inline photos in narrative - used for trails)
             let placesHtml = '';
-            if (mapsWidgetToken) {
+            const hasInlinePhotos = placePhotos && Object.keys(placePhotos).length > 0;
+            
+            if (mapsWidgetToken && !hasInlinePhotos) {
+                // Only show widget if we don't have inline photos
                 placesHtml = renderMapsWidget(mapsWidgetToken);
-            } else if (places && places.length > 0) {
-                // Check if we have rich place data (from grounding metadata)
+            } else if (places && places.length > 0 && !hasInlinePhotos) {
+                // Only show place cards if we don't have inline photos
                 const hasRichData = places.some(p => p.type === 'maps' && (p.text || p.reviews));
                 if (hasRichData) {
                     placesHtml = renderRichPlaceCards(places);
                 } else {
-                    // Fallback: use place IDs with gmp-place-details components
                     placesHtml = renderPlaceCardsFromIDs(places);
                 }
             }
+            // When hasInlinePhotos is true, photos are embedded in the markdown narrative
 
             // Build directions map HTML if present
             const directionsHtml = renderDirectionsMap(directions);
@@ -3261,20 +3761,25 @@
                 </span>
             `;
 
-            // Parse markdown - but hide text content if there's a rich card
+            // Parse markdown - insert photos from backend, then parse
             let contentHtml = '';
             const hasRichCard = trailsHtml || directionsHtml;
             if (!hasRichCard) {
-                contentHtml = marked.parse(answer);
+                // First, insert backend-provided photos into the markdown
+                let processedMarkdown = processPlacePhotos(answer, placePhotos);
+                // Then handle any manual place_photo: syntax
+                processedMarkdown = processManualPlacePhotos(processedMarkdown);
+                contentHtml = marked.parse(processedMarkdown);
             }
 
             // Update the answer section in place
+            // Put Maps widget FIRST for visual impact, then content
             const answerDiv = typingCard.querySelector('.conversation-answer');
             answerDiv.innerHTML = `
+        ${placesHtml}
         ${contentHtml ? `<div class="conversation-answer-content">${contentHtml}</div>` : ''}
         ${directionsHtml}
         ${trailsHtml}
-        ${placesHtml}
         ${citationsHtml}
     `;
 
@@ -3282,6 +3787,17 @@
             typingCard.removeAttribute('id');
 
             lucide.createIcons();
+            
+            // Attach click handlers for trail photo thumbnails
+            typingCard.querySelectorAll('.trail-photo-thumbnail').forEach(thumb => {
+                thumb.addEventListener('click', () => {
+                    const placeName = thumb.dataset.placeName;
+                    if (placeName && currentPlacePhotos[placeName]) {
+                        openLightbox(placeName);
+                    }
+                });
+            });
+            
             typingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
@@ -3304,7 +3820,8 @@
             showTypingCard(message);
 
             try {
-                const response = await fetch(`${API_BASE}/api/chat`, {
+                // Use streaming endpoint
+                const response = await fetch(`${API_BASE}/api/chat/stream`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3320,32 +3837,67 @@
                     throw new Error('Failed to get response');
                 }
 
-                const data = await response.json();
+                // Process SSE stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let accumulatedText = '';
+                let placePhotos = {};
 
-                // Update the typing card in place with the answer, places, directions, widget, agents used, and response type
-                // Debug: Log widget token
-                console.log('API Response - maps_widget_token:', data.maps_widget_token ? 'PRESENT (' + data.maps_widget_token.length + ' chars)' : 'NOT present');
-                console.log('API Response - response_type:', data.response_type);
-                console.log('API Response - trails_discovery:', data.trails_discovery ? 'PRESENT' : 'NOT present');
-                console.log('API Response - trail_details:', data.trail_details ? 'PRESENT' : 'NOT present');
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            
+                            if (data.type === 'agent') {
+                                // Update typing indicator with agent name
+                                updateTypingStatus(data.agent);
+                            } else if (data.type === 'status') {
+                                // Update with tool status
+                                updateTypingStatus(data.status);
+                            } else if (data.type === 'text') {
+                                // Append text chunk
+                                accumulatedText += data.text;
+                                appendStreamingContent(data.text);
+                            } else if (data.type === 'done') {
+                                // Final metadata with photos
+                                placePhotos = data.place_photos || {};
+                            }
+                        } catch (e) {
+                            // Ignore parse errors for incomplete chunks
+                        }
+                    }
+                }
+
+                // Clean up response and apply final formatting with photos
+                const cleanResponse = accumulatedText.replace(/\s*\[RESPONSE_TYPE:\s*\w+\]\s*/g, '').trim();
+                
+                // Update with final response including photos
                 updateTypingCardWithAnswer(
-                    data.response,
-                    data.citations || [],
-                    data.places || [],
-                    data.directions || null,
-                    data.maps_widget_token || null,
-                    data.agents_used || [],
-                    data.response_type || 'text',
-                    data.trails_discovery || null,
-                    data.trail_details || null
+                    cleanResponse,
+                    [], // citations
+                    [], // places
+                    null, // directions
+                    null, // maps_widget_token
+                    [], // agents_used
+                    'text', // response_type
+                    null, // trails_discovery
+                    null, // trail_details
+                    placePhotos
                 );
 
                 // Add to history
-                chatHistory.push({ role: 'assistant', content: data.response });
+                chatHistory.push({ role: 'assistant', content: cleanResponse });
 
             } catch (error) {
-                updateTypingCardWithAnswer('Sorry, I encountered an error. Please try again.', [], [], null, null, [], 'text', null, null);
+                updateTypingCardWithAnswer('Sorry, I encountered an error. Please try again.', [], [], null, null, [], 'text', null, null, {});
                 console.error('Chat error:', error);
             }
 

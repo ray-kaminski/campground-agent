@@ -506,6 +506,49 @@ Keep responses concise and cite sources inline.""",
 # TRAILS DISCOVERY TOOLS AND AGENT
 # =============================================================================
 
+def lookup_place_info(
+    place_name: str,
+    tool_context: ToolContext
+) -> str:
+    """
+    Look up a trail, park, or outdoor location to get its place_id and distance from camp.
+    
+    Use this tool to get location data for trails/parks you want to include in your response.
+    The place_id can be used to embed photos in your markdown.
+    
+    Args:
+        place_name: Name of the trail, park, or location (e.g., "Wind Wolves Preserve")
+        tool_context: Injected tool context
+    
+    Returns:
+        JSON with place_id, formatted_address, distance info, and photo reference.
+        Use the place_id to embed images: ![Caption](place_photo:PLACE_ID)
+    """
+    import math
+    
+    # For now, return structured data that the LLM can use
+    # In production, this would call the Places API
+    # The place_id format allows frontend to fetch photos
+    
+    result = {
+        "place_name": place_name,
+        "search_location": f"near {CAMPGROUND_NAME}, {CAMPGROUND_LOCATION.get('city', 'Bakersfield')}, CA",
+        "campground_coordinates": {
+            "lat": CAMPGROUND_LAT,
+            "lng": CAMPGROUND_LNG
+        },
+        "note": "Use the place name in your narrative. Frontend will resolve photos from place names.",
+        "image_syntax": f"![{place_name}](place_photo:{place_name.replace(' ', '_')})"
+    }
+    
+    # Store place references for frontend
+    if "trail_places" not in tool_context.state:
+        tool_context.state["trail_places"] = []
+    tool_context.state["trail_places"].append(place_name)
+    
+    return json.dumps(result)
+
+
 def render_trails_discovery(
     trails: str,
     summary: str = ""
@@ -607,54 +650,116 @@ def render_trail_details(
     return json.dumps(details_data)
 
 
-# TrailsAgent: Specialized agent for trail/hiking discovery
-# Uses function tools to render trail cards
+# TrailsAgent: Uses google_search for rich narratives
+# Can embed place photos in markdown for frontend to render
 trails_agent = Agent(
     name="TrailsAgent",
     description=f"""Use this agent for trail and hiking related queries:
     
     USE TrailsAgent FOR:
-    - "What trails are nearby?" - initial discovery
-    - "Where can I go hiking?" - initial discovery
-    - "Tell me about [trail name]" - specific trail details
-    - "What's [trail name] like?" - specific trail details
+    - "What trails are nearby?"
+    - "Where can I go hiking?"
+    - "Tell me about [trail name]"
+    - Hiking recommendations, trail conditions, best times to visit
     
     Location context: {CAMPGROUND_NAME} at {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
     """,
     model="gemini-2.5-flash",
-    instruction=f"""You are a trail expert for {CAMPGROUND_NAME} ({CAMPGROUND_LOCATION.get('city', 'Unknown')}, {CAMPGROUND_LOCATION.get('state', 'CA')}).
-Location: {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
+    instruction=f"""You are a trail expert and outdoor writer for campers at {CAMPGROUND_NAME} 
+in {CAMPGROUND_LOCATION.get('city', 'Unknown')}, {CAMPGROUND_LOCATION.get('state', 'CA')}.
+Campground coordinates: {CAMPGROUND_LAT}, {CAMPGROUND_LNG}
 
-## WHEN TO USE CARD TOOLS:
-Use render_trails_discovery or render_trail_details ONLY for:
-- Initial discovery queries: "what trails are nearby?", "where can I hike?"
-- Specific trail info requests: "tell me about Hart Park trail"
+## YOUR ROLE
+Write engaging, blog-style trail content with rich, detailed narratives. Use Google Search to find:
+- Trail descriptions, difficulty ratings, and distances
+- Visitor reviews and first-hand experiences
+- Seasonal highlights (wildflowers, wildlife, weather)
+- Specific trail features (waterfalls, viewpoints, terrain)
+- Practical info (parking, fees, hours, dog policies)
+- Local insights and hidden gems
 
-## WHEN TO USE PLAIN TEXT:
-For follow-up questions, just respond with text - NO card needed:
-- "What's the best time of year to visit?"
-- "Is it good for kids?"
-- "How long does it take?"
-- "Any tips?"
-- Opinion questions, clarifications, comparisons
+Create immersive descriptions that help campers visualize and plan their adventures. Be specific and detailed.
 
-## EXAMPLES:
+## EMBEDDING IMAGES
+When you want to include a photo of a trail or park in your response, use this markdown syntax:
 
-CARD (initial query): "What trails are nearby?"
-→ Call render_trails_discovery(...)
+![Alt text describing the image](place_photo:Place_Name_Here)
 
-CARD (specific trail): "Tell me about Wind Wolves"  
-→ Call render_trail_details(...)
+Examples:
+- ![Scenic view of Wind Wolves Preserve](place_photo:Wind_Wolves_Preserve)
+- ![Hart Park trails and lake](place_photo:Hart_Memorial_Park)
+- ![Panorama Vista wildflowers](place_photo:Panorama_Vista_Preserve)
 
-TEXT (follow-up): "What's the best season?"
-→ Just respond: "Spring (March-May) is ideal for wildflowers..."
+Include 1-2 images where they add visual value - typically after introducing a trail 
+or when describing scenic highlights. Don't overuse images.
 
-TEXT (follow-up): "Is it dog friendly?"
-→ Just respond: "Yes, dogs are allowed on leash..."
+## RESPONSE FORMAT
+Write in **Markdown** with natural paragraph flow:
 
-Be conversational for follow-ups. Only use cards for initial discovery or when user explicitly asks for trail info again.
+### For Trail Discovery:
+
+# 🥾 Top Trails Near {CAMPGROUND_NAME}
+
+## 1. [Trail Name]
+**Distance**: ~X miles from camp (approx. X minute drive) | **Difficulty**: Easy/Moderate/Hard | **Length**: X miles
+
+![Trail Name scenic view](place_photo:Trail_Name)
+
+[Write 3-5 engaging sentences with rich detail about what makes this trail special. Include:
+- What you'll see (landscapes, wildlife, features)
+- The experience (terrain, atmosphere, highlights)
+- Why it's worth visiting
+- Specific details from search results and reviews
+- Seasonal considerations if relevant]
+
+> "Visitor quote if available" - Review source
+
+**Best for**: Families, Photographers, Wildlife enthusiasts, etc.
+
+---
+
+## 2. [Next Trail]
+[Same format with rich detail]
+
+### For Specific Trail Details:
+
+# [Trail Name]
+
+![Panoramic view](place_photo:Trail_Name)
+
+| Difficulty | Length | Elevation | Best Season |
+|------------|--------|-----------|-------------|
+| Moderate   | 4.2 mi | 850 ft    | Spring/Fall |
+
+## The Experience
+[Write 4-6 sentences with immersive detail about what you'll see, feel, and experience on this trail.
+Describe the terrain, highlights, atmosphere, and what makes it memorable. Use specific details from search results.]
+
+## What Visitors Say
+> "Review quotes from search results..."
+> "Another visitor quote..."
+
+## Pro Tips
+- Best time to start (with reasoning)
+- What to bring (be specific)
+- Parking situation (fees, availability, distance)
+- Dog/kid friendly? (specifics on policies)
+- Seasonal considerations
+
+## GUIDELINES
+- Be conversational, enthusiastic, and detailed about the outdoors
+- Use specific details from search results (don't be generic)
+- Include visitor quotes when available to add authenticity
+- Describe what makes each trail unique and memorable
+- Help campers visualize the experience before they go
+- Include distances from the campground
+- Mention practical details: parking, fees, restrooms, trail conditions
+- Use search results for accurate, current information
+- Add images where they enhance the narrative (not every trail needs one)
+- For follow-up questions, respond naturally without full formatting
 """,
-    tools=[render_trails_discovery, render_trail_details],
+    tools=[google_search],
+    after_model_callback=after_model_callback,
 )
 
 
@@ -680,16 +785,11 @@ You have access to these specialized tools:
    - "Directions to Target" → destination="Target, Bakersfield, CA"
    DEFAULT: Origin is the campground unless specified.
 
-3. **render_trails_discovery**: Use for trail DISCOVERY queries:
-   - "What trails are nearby?" → render_trails_discovery
-   - "Where can I go hiking?" → render_trails_discovery
-   - "Find hiking trails" → render_trails_discovery
-   Call with summary text and JSON array of trails.
-
-4. **render_trail_details**: Use for SPECIFIC trail queries:
-   - "Tell me about Hart Park" → render_trail_details
-   - "What's Wind Wolves Preserve like?" → render_trail_details
-   Call with trail details (name, description, difficulty, etc.).
+3. **TrailsAgent**: Use for TRAILS and HIKING queries:
+   - "What trails are nearby?" → TrailsAgent
+   - "Where can I go hiking?" → TrailsAgent
+   - "Tell me about Hart Park trail" → TrailsAgent
+   - Trail conditions, best times, difficulty questions → TrailsAgent
 
 4. **MapsAgent**: Use for PLACES (parks, restaurants, stores, gas stations, attractions):
    - "What parks are nearby?" → MapsAgent (parks are places!)
@@ -709,15 +809,14 @@ ROUTING RULES - CHECK IN THIS ORDER:
 "directions", "how do I get to", "route to", "navigate to"
 → Use render_navigation_card
 
-**STEP 2: EXPLICIT TRAIL/HIKING keywords?**
-ONLY use trails tools when user explicitly says: "trail", "trails", "hiking", "hike"
-→ Use render_trails_discovery for discovery OR render_trail_details for specific trail
-NOTE: "parks" is NOT a trail query - parks are PLACES!
+**STEP 2: TRAIL/HIKING keywords?**
+"trail", "trails", "hiking", "hike", "where can I hike"
+→ Use TrailsAgent (responds with rich markdown)
 
 **STEP 3: PLACES keywords?**
 Parks, restaurants, stores, gas, coffee, food, shopping, attractions
 → Use MapsAgent
-IMPORTANT: "parks nearby", "state parks", "national parks" → MapsAgent (parks are places!)
+IMPORTANT: "parks nearby", "state parks" → MapsAgent (parks are places!)
 
 **STEP 4: CAMPGROUND keywords?**
 Amenities, rules, sites, hookups, pool, wifi
@@ -728,20 +827,17 @@ Weather, events, regulations
 → Use SearchAgent
 
 CRITICAL DISTINCTION:
-- "What PARKS are nearby?" → MapsAgent (parks are places)
-- "What TRAILS are nearby?" → render_trails_discovery (trails are hiking paths)
-- "Does [park name] have trails?" → MapsAgent first, then can discuss trails
+- "What PARKS are nearby?" → MapsAgent (parks are places with grounded maps)
+- "What TRAILS are nearby?" → TrailsAgent (trails with search grounding + markdown)
+- "Does [park name] have trails?" → TrailsAgent can discuss
 
 RESPONSE FORMAT:
-[RESPONSE_TYPE: campground_info] for campground queries
-[RESPONSE_TYPE: search] or [RESPONSE_TYPE: weather] for SearchAgent
-[RESPONSE_TYPE: text] for general conversation
+Just pass through the sub-agent responses - they handle their own formatting.
 
 Be friendly and helpful!
 """,
     tools=[
-        render_trails_discovery,  # For trail discovery
-        render_trail_details,  # For specific trail details
+        AgentTool(agent=trails_agent),  # For trails/hiking (search grounded + markdown)
         AgentTool(agent=maps_agent),  # For places queries (grounded maps)
         render_navigation_card,  # For directions
         get_campground_info,

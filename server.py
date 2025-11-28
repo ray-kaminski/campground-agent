@@ -45,6 +45,133 @@ GOOGLE_PLACES_API_KEY = "AIzaSyB_m4hT4FHoxiZ_JcuHteaVpGbSmwxvmz4"
 sessions: Dict[str, str] = {}  # user_id -> session_id
 
 
+async def fetch_place_photos_by_id(place_ids: List[str], client: httpx.AsyncClient) -> Dict[str, str]:
+    """
+    Fetch photo URLs for a list of place_ids using Google Places API (New).
+    Returns a dict mapping place_name -> photo_url
+    """
+    photos = {}
+    
+    for place_id in place_ids[:5]:  # Limit to 5 places to avoid too many API calls
+        if not place_id:
+            continue
+            
+        # Clean up place_id format (remove 'places/' prefix if present)
+        clean_id = place_id.replace('places/', '') if place_id.startswith('places/') else place_id
+        
+        try:
+            # Use Places API (New) to get place details with photos
+            url = f"https://places.googleapis.com/v1/places/{clean_id}"
+            headers = {
+                "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
+                "X-Goog-FieldMask": "displayName,photos"
+            }
+            
+            response = await client.get(url, headers=headers, timeout=5.0)
+            
+            if response.status_code == 200:
+                data = response.json()
+                display_name = data.get("displayName", {}).get("text", "")
+                photos_list = data.get("photos", [])
+                
+                if photos_list and display_name:
+                    # Get the first photo's name/reference
+                    photo_name = photos_list[0].get("name", "")
+                    if photo_name:
+                        # Construct photo URL using Places Photo API
+                        photo_url = f"https://places.googleapis.com/v1/{photo_name}/media?maxWidthPx=800&key={GOOGLE_PLACES_API_KEY}"
+                        photos[display_name] = photo_url
+                        
+        except Exception as e:
+            print(f"Error fetching photo for {place_id}: {e}")
+            continue
+    
+    return photos
+
+
+async def fetch_place_photos_by_name(place_names: List[str], client: httpx.AsyncClient) -> Dict[str, List[str]]:
+    """
+    Search for places by name and fetch their photos.
+    Returns a dict mapping place_name -> [list of photo_urls]
+    """
+    photos = {}
+    
+    for place_name in place_names[:3]:  # Limit to 3 to avoid too many API calls
+        if not place_name:
+            continue
+            
+        try:
+            # Use Places API Text Search to find the place
+            url = "https://places.googleapis.com/v1/places:searchText"
+            headers = {
+                "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
+                "X-Goog-FieldMask": "places.displayName,places.photos",
+                "Content-Type": "application/json"
+            }
+            body = {
+                "textQuery": f"{place_name}, California",
+                "maxResultCount": 1
+            }
+            
+            response = await client.post(url, headers=headers, json=body, timeout=5.0)
+            
+            if response.status_code == 200:
+                data = response.json()
+                places_list = data.get("places", [])
+                
+                if places_list:
+                    place = places_list[0]
+                    display_name = place.get("displayName", {}).get("text", place_name)
+                    photos_list = place.get("photos", [])
+                    
+                    if photos_list:
+                        # Get up to 5 photos per place
+                        photo_urls = []
+                        for photo in photos_list[:5]:
+                            photo_name = photo.get("name", "")
+                            if photo_name:
+                                photo_url = f"https://places.googleapis.com/v1/{photo_name}/media?maxWidthPx=1200&key={GOOGLE_PLACES_API_KEY}"
+                                photo_urls.append(photo_url)
+                        
+                        if photo_urls:
+                            photos[display_name] = photo_urls
+                            # Also add the original search name as a key
+                            if display_name.lower() != place_name.lower():
+                                photos[place_name] = photo_urls
+                        
+        except Exception as e:
+            print(f"Error searching for place {place_name}: {e}")
+            continue
+    
+    return photos
+
+
+def extract_place_names_from_response(response_text: str) -> List[str]:
+    """
+    Extract likely trail/park names from the response text.
+    Looks for patterns like "## 1. Place Name" or "**Place Name**"
+    """
+    place_names = []
+    
+    # Pattern 1: Markdown headers with numbers like "## 1. Wind Wolves Preserve"
+    header_pattern = r'##?\s*\d+\.?\s*([A-Z][^#\n]+?)(?:\n|$)'
+    for match in re.finditer(header_pattern, response_text):
+        name = match.group(1).strip()
+        # Clean up common suffixes
+        name = re.sub(r'\s*[-–]\s*.*$', '', name)  # Remove "- description" parts
+        if len(name) > 3 and len(name) < 50:
+            place_names.append(name)
+    
+    # Pattern 2: Bold text that looks like place names (capitalized words)
+    bold_pattern = r'\*\*([A-Z][A-Za-z\s]+(?:Park|Preserve|Trail|Lake|Canyon|Mountain|Forest|Reserve|Area))\*\*'
+    for match in re.finditer(bold_pattern, response_text):
+        name = match.group(1).strip()
+        if name not in place_names and len(name) > 3:
+            place_names.append(name)
+    
+    return place_names[:5]  # Limit to 5
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -68,6 +195,7 @@ class ChatResponse(BaseModel):
     agents_used: List[str] = []  # Track which agents were invoked
     maps_widget_token: Optional[str] = None  # Google Maps contextual widget token
     maps_place_ids: List[str] = []  # Place IDs for fallback rendering
+    place_photos: Dict[str, List[str]] = {}  # {place_name: [photo_urls]} from backend
 
 
 def get_campground_info_direct(category: str) -> dict:
@@ -308,6 +436,31 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         elif maps_widget_token or maps_places:
             response_type = "places"
 
+        # Fetch photos for places (backend approach)
+        place_photos = {}
+        
+        # Method 1: Use place_ids if available (from Maps grounding)
+        if maps_place_ids:
+            place_photos = await fetch_place_photos_by_id(maps_place_ids, client)
+        
+        # Method 2: Extract place names from response and search (for search grounding)
+        if not place_photos and clean_response:
+            place_names = extract_place_names_from_response(clean_response)
+            print(f"[Photo Fetch] Extracted place names: {place_names}", flush=True)
+            if place_names:
+                try:
+                    place_photos = await fetch_place_photos_by_name(place_names, client)
+                    print(f"[Photo Fetch] Got photos for: {list(place_photos.keys())}", flush=True)
+                except Exception as e:
+                    print(f"[Photo Fetch] Error: {e}", flush=True)
+                    place_photos = {}
+
+        # Ensure place_photos is always a dict
+        if place_photos is None:
+            place_photos = {}
+        
+        print(f"[Photo Fetch] FINAL place_photos before return: {list(place_photos.keys())}", flush=True)
+            
         return {
             "response": clean_response,
             "citations": [],
@@ -318,7 +471,8 @@ async def send_to_agent(user_id: str, message: str) -> dict:
             "response_type": response_type,
             "agents_used": all_sources,
             "maps_widget_token": maps_widget_token,
-            "maps_place_ids": maps_place_ids
+            "maps_place_ids": maps_place_ids,
+            "place_photos": place_photos  # {place_name: photo_url}
         }
 
 
@@ -382,7 +536,6 @@ async def get_campground_markdown(campground_id: str):
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Chat endpoint that forwards messages to the ADK agent."""
-    # Use a simple user_id for now
     user_id = "frontend_user"
 
     try:
@@ -391,6 +544,136 @@ async def chat(request: ChatRequest):
     except Exception as e:
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """Streaming chat endpoint - returns SSE with progressive updates."""
+    from fastapi.responses import StreamingResponse
+    
+    user_id = "frontend_user"
+    
+    async def generate_stream():
+        session_id = await get_or_create_session(user_id)
+        
+        request_body = {
+            "app_name": "app",
+            "user_id": user_id,
+            "session_id": session_id,
+            "new_message": {
+                "role": "user",
+                "parts": [{"text": request.message}]
+            }
+        }
+        
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream(
+                "POST",
+                f"{ADK_SERVER_URL}/run_sse",
+                json=request_body,
+                headers={"Accept": "text/event-stream"}
+            ) as response:
+                
+                current_agent = None
+                current_status = None
+                accumulated_text = ""
+                place_ids = []
+                
+                # Agent display names
+                AGENT_DISPLAYS = {
+                    "TrailsAgent": "🥾 Asking TrailsAgent...",
+                    "MapsAgent": "🗺️ Asking MapsAgent...",
+                    "SearchAgent": "🔍 Searching the web...",
+                    "CampgroundAssistant": "💭 Thinking...",
+                }
+                
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    
+                    try:
+                        data = json.loads(line[6:])
+                        
+                        # Detect agent being called via functionCall
+                        if "content" in data and data["content"]:
+                            parts = data["content"].get("parts", [])
+                            for part in parts:
+                                # Detect agent routing (root calling sub-agent)
+                                if "functionCall" in part:
+                                    agent_name = part["functionCall"].get("name", "")
+                                    if agent_name in AGENT_DISPLAYS and agent_name != current_agent:
+                                        current_agent = agent_name
+                                        status = AGENT_DISPLAYS[agent_name]
+                                        if status != current_status:
+                                            current_status = status
+                                            yield f"data: {json.dumps({'type': 'agent', 'agent': status})}\n\n"
+                        
+                        # Detect author changes (which agent is responding)
+                        if "author" in data:
+                            author = data["author"]
+                            if author and author != "CampgroundAssistant":
+                                # Sub-agent is responding
+                                if author in AGENT_DISPLAYS and author != current_agent:
+                                    current_agent = author
+                                    # When TrailsAgent starts responding, it's searching
+                                    if author == "TrailsAgent":
+                                        status = "🔍 Searching trails & reviews..."
+                                    elif author == "MapsAgent":
+                                        status = "🗺️ Finding places..."
+                                    else:
+                                        status = AGENT_DISPLAYS.get(author, f"Using {author}...")
+                                    
+                                    if status != current_status:
+                                        current_status = status
+                                        yield f"data: {json.dumps({'type': 'agent', 'agent': status})}\n\n"
+                        
+                        # Detect google_search tool being used (grounding)
+                        if "groundingMetadata" in str(data) or "searchEntryPoint" in str(data):
+                            if current_status != "🔍 Searching Google...":
+                                current_status = "🔍 Searching Google..."
+                                yield f"data: {json.dumps({'type': 'status', 'status': current_status})}\n\n"
+                        
+                        # Extract grounding metadata for place_ids
+                        if "actions" in data and "stateDelta" in data["actions"]:
+                            state_delta = data["actions"]["stateDelta"]
+                            if "maps_grounding" in state_delta:
+                                grounding = state_delta["maps_grounding"]
+                                place_ids = grounding.get("place_ids", [])
+                        
+                        # Stream text content
+                        if "content" in data and data["content"]:
+                            parts = data["content"].get("parts", [])
+                            for part in parts:
+                                if "text" in part:
+                                    text_chunk = part["text"]
+                                    accumulated_text += text_chunk
+                                    yield f"data: {json.dumps({'type': 'text', 'text': text_chunk})}\n\n"
+                    
+                    except json.JSONDecodeError:
+                        continue
+                
+                # After streaming complete, fetch photos and send final metadata
+                clean_response = re.sub(r'\s*\[RESPONSE_TYPE:\s*\w+\]\s*', '', accumulated_text).strip()
+                
+                # Extract place names and fetch photos
+                place_photos = {}
+                if clean_response:
+                    place_names = extract_place_names_from_response(clean_response)
+                    if place_names:
+                        async with httpx.AsyncClient(timeout=30.0) as photo_client:
+                            place_photos = await fetch_place_photos_by_name(place_names, photo_client)
+                
+                # Send final metadata
+                yield f"data: {json.dumps({'type': 'done', 'place_photos': place_photos})}\n\n"
+        
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )
 
 
 @app.get("/api/place-photo/{photo_reference}")
