@@ -2554,7 +2554,7 @@
                 } else if (md.startsWith('```')) {
                     md = md.replace(/^```\n?/, '').replace(/\n?```$/, '');
                 }
-                document.getElementById('markdown-content').innerHTML = marked.parse(md);
+                document.getElementById('markdown-content').innerHTML = parseMarkdown(md);
 
                 // Store for chat context
                 campgroundContext = md;
@@ -2574,6 +2574,14 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Parse markdown and make external links open in new tabs
+        function parseMarkdown(md) {
+            let html = marked.parse(md);
+            // Add target="_blank" to all external links
+            html = html.replace(/<a href="(https?:\/\/[^"]+)"/g, '<a href="$1" target="_blank" rel="noopener noreferrer"');
+            return html;
         }
 
         // Show typing indicator as a card (with agent status)
@@ -2619,7 +2627,7 @@
                 indicator.style.display = 'none';
                 streamingDiv.style.display = 'block';
                 // Parse markdown and render
-                streamingDiv.innerHTML = `<div class="conversation-answer-content">${marked.parse(text)}</div>`;
+                streamingDiv.innerHTML = `<div class="conversation-answer-content">${parseMarkdown(text)}</div>`;
             }
         }
 
@@ -2631,7 +2639,7 @@
                 const currentText = streamingDiv.dataset.rawText || '';
                 const newText = currentText + chunk;
                 streamingDiv.dataset.rawText = newText;
-                streamingDiv.innerHTML = `<div class="conversation-answer-content">${marked.parse(newText)}</div>`;
+                streamingDiv.innerHTML = `<div class="conversation-answer-content">${parseMarkdown(newText)}</div>`;
                 streamingDiv.style.display = 'block';
                 
                 // Hide typing indicator once we have content
@@ -3769,7 +3777,7 @@
                 let processedMarkdown = processPlacePhotos(answer, placePhotos);
                 // Then handle any manual place_photo: syntax
                 processedMarkdown = processManualPlacePhotos(processedMarkdown);
-                contentHtml = marked.parse(processedMarkdown);
+                contentHtml = parseMarkdown(processedMarkdown);
             }
 
             // Update the answer section in place

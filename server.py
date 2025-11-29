@@ -36,7 +36,7 @@ app.add_middleware(
 )
 
 # ADK Web Server URL (running on port 8001)
-ADK_SERVER_URL = "http://127.0.0.1:8001"
+ADK_SERVER_URL = "http://127.0.0.1:5001"
 
 # Google Places API key (for photos proxy)
 GOOGLE_PLACES_API_KEY = "AIzaSyB_m4hT4FHoxiZ_JcuHteaVpGbSmwxvmz4"
@@ -328,8 +328,6 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         
         # Tool-based structured responses
         navigation_directions = None
-        trails_discovery_data = None
-        trail_details_data = None
 
         for line in response.text.split("\n"):
             if line.startswith("data: "):
@@ -384,33 +382,8 @@ async def send_to_agent(user_id: str, message: str) -> dict:
                                 except json.JSONDecodeError:
                                     pass
                             
-                            # Handle render_trails_discovery tool
-                            if func_name == "render_trails_discovery" and result:
-                                try:
-                                    trails_data = json.loads(result)
-                                    if trails_data.get("type") == "trails_discovery":
-                                        trails_discovery_data = {
-                                            "summary": trails_data.get("summary", ""),
-                                            "trails": trails_data.get("trails", "[]"),
-                                            "campground_location": trails_data.get("campground_location", {})
-                                        }
-                                        if isinstance(trails_discovery_data["trails"], str):
-                                            try:
-                                                trails_discovery_data["trails"] = json.loads(trails_discovery_data["trails"])
-                                            except:
-                                                trails_discovery_data["trails"] = []
-                                except json.JSONDecodeError:
-                                    pass
-                            
-                            # Handle render_trail_details tool
-                            if func_name == "render_trail_details" and result:
-                                try:
-                                    trail_data = json.loads(result)
-                                    if trail_data.get("type") == "trail_details":
-                                        trail_details_data = trail_data.get("trail", {})
-                                        trail_details_data["campground_location"] = trail_data.get("campground_location", {})
-                                except json.JSONDecodeError:
-                                    pass
+                            # Note: render_trails_discovery and render_trail_details removed
+                            # Discovery now uses PlacesAgent + SearchAgent directly
 
                         # Get text from response
                         if "text" in part:
@@ -429,10 +402,6 @@ async def send_to_agent(user_id: str, message: str) -> dict:
         response_type = "text"
         if navigation_directions:
             response_type = "navigation"
-        elif trails_discovery_data:
-            response_type = "trails_discovery"
-        elif trail_details_data:
-            response_type = "trail_details"
         elif maps_widget_token or maps_places:
             response_type = "places"
 
@@ -466,8 +435,8 @@ async def send_to_agent(user_id: str, message: str) -> dict:
             "citations": [],
             "places": maps_places,
             "directions": navigation_directions,
-            "trails_discovery": trails_discovery_data,
-            "trail_details": trail_details_data,
+            "trails_discovery": None,  # Deprecated - discovery uses markdown now
+            "trail_details": None,     # Deprecated - details use markdown now
             "response_type": response_type,
             "agents_used": all_sources,
             "maps_widget_token": maps_widget_token,
@@ -581,8 +550,8 @@ async def chat_stream(request: ChatRequest):
                 
                 # Agent display names
                 AGENT_DISPLAYS = {
-                    "TrailsAgent": "🥾 Asking TrailsAgent...",
-                    "MapsAgent": "🗺️ Asking MapsAgent...",
+                    "TrailsAgent": "🥾 Finding trails...",
+                    "PlacesAgent": "📍 Finding places...",
                     "SearchAgent": "🔍 Searching the web...",
                     "CampgroundAssistant": "💭 Thinking...",
                 }
@@ -615,11 +584,11 @@ async def chat_stream(request: ChatRequest):
                                 # Sub-agent is responding
                                 if author in AGENT_DISPLAYS and author != current_agent:
                                     current_agent = author
-                                    # When TrailsAgent starts responding, it's searching
+                                    # Show contextual status based on agent
                                     if author == "TrailsAgent":
-                                        status = "🔍 Searching trails & reviews..."
-                                    elif author == "MapsAgent":
-                                        status = "🗺️ Finding places..."
+                                        status = "🥾 Finding trails..."
+                                    elif author == "PlacesAgent":
+                                        status = "📍 Finding places..."
                                     else:
                                         status = AGENT_DISPLAYS.get(author, f"Using {author}...")
                                     
